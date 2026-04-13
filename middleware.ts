@@ -1,23 +1,20 @@
-import { withAuth } from 'next-auth/middleware'
+import { withAuth } from "next-auth/middleware"
 
 export default withAuth({
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
 })
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - login (login page)
-     * - signup (signup page)
-     * - logo.png (branding assets)
+     * Match all request paths except for:
+     * 1. /api routes
+     * 2. /_next (Next.js internals)
+     * 3. /static (inside /public)
+     * 4. /favicon.ico, /logo.png, etc.
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|login|signup|logo.png|.*\\.jpg|.*\\.png|.*\\.svg).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|logo.png).*)",
   ],
 }
