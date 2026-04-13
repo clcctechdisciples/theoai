@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #F5F0E8;
+  --cream-dark: #EDE5D0;
+  --forest: #2D5A27;
+  --forest-light: #4A7C59;
+  --forest-dark: #1A3A15;
+  --gold: #C9A84C;
+  --gold-light: #E8C86A;
+  --dark: #0F1A0E;
+  --dark-card: #162214;
+  --dark-border: #2A3F28;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  height: 100%;
+  background-color: var(--dark);
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--dark); }
+::-webkit-scrollbar-thumb { background: var(--forest); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--forest-light); }
+
+/* Glass card */
+.glass-card {
+  background: rgba(22, 34, 20, 0.85);
+  border: 1px solid rgba(74, 124, 89, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Gold gradient text */
+.gold-text {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Forest gradient bg */
+.forest-gradient {
+  background: linear-gradient(135deg, var(--forest-dark), var(--forest));
+}
+
+/* Glow effects */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+}
+.glow-green {
+  box-shadow: 0 0 20px rgba(74, 124, 89, 0.3);
+}
+
+/* Animated border */
+.animated-border {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+.animated-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--forest-light), var(--gold), var(--forest-light));
+  background-size: 200% 200%;
+  animation: borderAnim 4s linear infinite;
+  z-index: -1;
+}
+@keyframes borderAnim {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Idle animation rays */
+@keyframes rayPulse {
+  0%, 100% { opacity: 0.15; transform: scaleY(1); }
+  50% { opacity: 0.4; transform: scaleY(1.05); }
+}
+
+/* Typing indicator */
+.typing-dot {
+  width: 8px; height: 8px;
+  background: var(--forest-light);
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* Scripture card animation */
+@keyframes scriptureReveal {
+  0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.scripture-reveal { animation: scriptureReveal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+/* Lyric line animation */
+@keyframes lyricIn {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.lyric-line { animation: lyricIn 0.4s ease-out forwards; }
+
+/* Recording pulse */
+@keyframes recordPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+}
+.record-pulse { animation: recordPulse 1.5s ease-in-out infinite; }
+
+/* Mode badge */
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
