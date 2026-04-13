@@ -1,6 +1,5 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { getUsers } from './db'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
@@ -26,14 +25,19 @@ export const authOptions: NextAuthOptions = {
            }
         }
 
-        // Check local DB
-        const users = getUsers()
-        const user = users.find((u: any) => u.username === credentials.username)
-        if (user) {
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-          if (isPasswordValid) {
-            return { id: user.id, name: user.username, email: `${user.username}@clcc.church` }
+        // Check local DB (Dynamic import to avoid Edge Runtime issues with 'fs')
+        try {
+          const { getUsers } = await import('./db')
+          const users = getUsers()
+          const user = users.find((u: any) => u.username === credentials.username)
+          if (user) {
+            const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+            if (isPasswordValid) {
+              return { id: user.id, name: user.username, email: `${user.username}@clcc.church` }
+            }
           }
+        } catch (err) {
+          console.error('DB access error in auth:', err)
         }
         
         return null
