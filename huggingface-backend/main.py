@@ -42,7 +42,7 @@ Rules:
             "X-Title": "Theo AI Frontend"
         },
         json={
-            "model": "meta-llama/llama-3.3-70b-instruct:free",
+            "model": "nvidia/nemotron-3-super-120b-a12b:free",
             "messages": api_messages
         }
     )
@@ -76,7 +76,7 @@ Extract and generate the following in cleanly formatted markdown:
             "X-Title": "Theo AI Frontend"
         },
         json={
-            "model": "meta-llama/llama-3.3-70b-instruct:free",
+            "model": "nvidia/nemotron-3-super-120b-a12b:free",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Transcript:\n{req.transcript}"}
