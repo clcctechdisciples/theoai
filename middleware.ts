@@ -8,6 +8,16 @@ export default withAuth({
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|login|CLCC Logo*).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - login (login page)
+     * - signup (signup page)
+     * - logo.png (branding assets)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|login|signup|logo.png|.*\\.jpg|.*\\.png|.*\\.svg).*)',
   ],
 }
