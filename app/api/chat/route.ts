@@ -7,7 +7,8 @@ export async function POST(req: Request) {
     // Fallback to localhost if user has not yet set the backend URL
     const backendUrl = process.env.AI_BACKEND_URL || 'http://localhost:8000'
 
-    const res = await fetch(`${backendUrl}/api/chat`, {
+    const cleanBackendUrl = backendUrl.replace(/\/$/, '')
+    const res = await fetch(`${cleanBackendUrl}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
