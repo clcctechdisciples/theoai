@@ -2,7 +2,8 @@
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import Link from 'next/link'
+import { LogIn, UserPlus } from 'lucide-react'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -15,14 +16,10 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const res = await signIn('credentials', {
-      redirect: false,
-      username,
-      password,
-    })
+    const res = await signIn('credentials', { redirect: false, username, password })
     setLoading(false)
     if (res?.error) {
-      setError('Invalid credentials. Please try again.')
+      setError('Invalid username or password. Please try again.')
     } else {
       router.push('/')
       router.refresh()
@@ -30,62 +27,84 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden font-inter">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40 bg-[radial-gradient(circle_at_center,_#047361_0%,_transparent_70%)]" />
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-forest/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-forest/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen flex items-center justify-center bg-dark-950 relative overflow-hidden font-inter">
+      {/* Background glows */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#1A3316_0%,_#0A0F0A_70%)]" />
+      <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-forest-700/20 rounded-full blur-[140px]" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gold/5 rounded-full blur-[100px]" />
 
-      <div className="glass-card w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative z-10 border border-white/10">
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-24 h-24 rounded-3xl bg-forest/10 flex items-center justify-center mb-6 border border-forest/20 shadow-2xl shadow-forest/10">
-            <Image src="/logo.png" alt="Logo" width={64} height={64} className="object-contain" />
-          </div>
-          <h1 className="font-cinzel text-5xl font-black text-white tracking-tighter">THEO AI</h1>
-          <div className="h-1 w-12 bg-cream mt-2 rounded-full"></div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-3 rounded-lg text-sm text-center">
-              {error}
+      <div className="relative z-10 w-full max-w-md px-6">
+        <div className="glass-card p-10 rounded-[2.5rem] shadow-2xl border border-cream/10">
+          {/* Header */}
+          <div className="flex flex-col items-center mb-10">
+            <div className="w-16 h-16 rounded-2xl bg-forest border border-gold/30 flex items-center justify-center mb-6 shadow-xl">
+              <LogIn className="w-7 h-7 text-gold" />
             </div>
-          )}
-          
-          <div className="space-y-2">
-            <label className="block text-white/40 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-forest/50 focus:bg-white/10 transition-all font-medium"
-              required
-            />
+            <h1 className="font-cinzel text-4xl font-black text-cream tracking-tighter">THEO AI</h1>
+            <p className="text-cream/40 text-xs uppercase tracking-[0.2em] mt-2 font-bold">Church Media Assistant</p>
+            <div className="h-0.5 w-12 bg-gold/60 mt-4 rounded-full" />
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-white/40 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-forest/50 focus:bg-white/10 transition-all font-medium"
-              required
-            />
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-300 p-3 rounded-xl text-sm text-center">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="block text-cream/50 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                className="w-full bg-white/5 border border-cream/10 rounded-2xl px-5 py-4 text-cream placeholder:text-cream/20 focus:outline-none focus:border-forest/60 focus:bg-white/8 transition-all font-medium"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-cream/50 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full bg-white/5 border border-cream/10 rounded-2xl px-5 py-4 text-cream placeholder:text-cream/20 focus:outline-none focus:border-forest/60 transition-all font-medium"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-forest border border-forest-700/50 text-cream font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl hover:brightness-125 active:scale-[0.98] transition-all shadow-xl shadow-forest/20 flex items-center justify-center gap-2 mt-2"
+            >
+              {loading
+                ? <div className="w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
+                : <><LogIn className="w-4 h-4" /> Sign In</>
+              }
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 my-8">
+            <div className="flex-1 h-px bg-cream/10" />
+            <span className="text-cream/30 text-[10px] font-black uppercase tracking-widest">or</span>
+            <div className="flex-1 h-px bg-cream/10" />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-forest text-cream font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl hover:bg-forest-light active:scale-[0.98] transition-all shadow-xl shadow-forest/20 flex items-center justify-center gap-2 mt-4"
+          {/* Create Account CTA */}
+          <Link
+            href="/signup"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-gold/30 bg-gold/5 text-cream hover:bg-gold/10 hover:border-gold/60 transition-all font-bold text-sm"
           >
-            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Initialize System'}
-          </button>
-        </form>
-
-        <p className="text-center text-[10px] font-bold text-white/20 uppercase tracking-widest mt-10">
-          Authorized Personnel Only • <a href="/signup" className="text-forest-light hover:text-cream transition-colors">Create Account</a>
-        </p>
+            <UserPlus className="w-4 h-4 text-gold" />
+            Create a New Account
+          </Link>
+        </div>
       </div>
     </div>
   )
