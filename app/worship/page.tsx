@@ -8,17 +8,17 @@ import { Check, Edit2, Plus, Trash2, Save, FolderOpen, MonitorPlay as MonitorIco
 
 export default function WorshipPage() {
   const [globalState, setGlobalState] = useState({ mode: 'idle', lyricLines: [] as string[], lyricSection: '' })
-  
+
   const [masterText, setMasterText] = useState('')
   const [verses, setVerses] = useState<string[][]>([])
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0)
-  
+
   const [songTitle, setSongTitle] = useState('')
   const [library, setLibrary] = useState<any[]>([])
   const [showLibrary, setShowLibrary] = useState(false)
 
   useEffect(() => {
-    fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : [])).catch(()=>{})
+    fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : [])).catch(() => { })
   }, [])
 
   // Poll state just to keep local UI synced with what's actually on the projector
@@ -27,7 +27,7 @@ export default function WorshipPage() {
       try {
         const r = await fetch('/api/control'); const d = await r.json()
         setGlobalState(d)
-      } catch(e) {}
+      } catch (e) { }
     }, 2000)
     return () => clearInterval(int)
   }, [])
@@ -36,8 +36,8 @@ export default function WorshipPage() {
     // Auto-split master string into 3-line chunks
     const lines = masterText.split('\n').filter(l => l.trim() !== '')
     const newVerses = []
-    for(let i=0; i < lines.length; i+=3) {
-      newVerses.push(lines.slice(i, i+3))
+    for (let i = 0; i < lines.length; i += 3) {
+      newVerses.push(lines.slice(i, i + 3))
     }
     setVerses(newVerses)
   }, [masterText])
@@ -58,7 +58,7 @@ export default function WorshipPage() {
         method: 'POST',
         body: JSON.stringify({ action: 'setLyrics', lines: newLines.filter(l => l.trim().length > 0), section: 'Live Audio' })
       })
-    } catch(e) {}
+    } catch (e) { }
   }
 
   const saveToLibrary = async () => {
@@ -70,7 +70,7 @@ export default function WorshipPage() {
       })
       fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : []))
       alert("Song saved to Library!")
-    } catch(e) { alert("Failed to save.") }
+    } catch (e) { alert("Failed to save.") }
   }
 
   return (
@@ -89,15 +89,15 @@ export default function WorshipPage() {
           </header>
 
           {showLibrary && (
-             <div className="glass-card mb-8 p-6 rounded-2xl border border-gold/30 animate-fade-in grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-               {library.map(song => (
-                 <div key={song.id} className="bg-dark border border-forest/20 p-4 rounded-xl hover:border-gold/50 cursor-pointer transition-all" onClick={() => { setSongTitle(song.title); setMasterText(song.lyrics?.[0] || ''); setShowLibrary(false) }}>
-                   <h3 className="font-bold text-cream truncate">{song.title}</h3>
-                   <span className="text-[10px] uppercase text-gold-light mt-1 block">Saved Song</span>
-                 </div>
-               ))}
-               {library.length === 0 && <p className="text-sm text-cream/50 col-span-full">No songs saved yet. Type below and hit Save!</p>}
-             </div>
+            <div className="glass-card mb-8 p-6 rounded-2xl border border-gold/30 animate-fade-in grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {library.map(song => (
+                <div key={song.id} className="bg-dark border border-forest/20 p-4 rounded-xl hover:border-gold/50 cursor-pointer transition-all" onClick={() => { setSongTitle(song.title); setMasterText(song.lyrics?.[0] || ''); setShowLibrary(false) }}>
+                  <h3 className="font-bold text-cream truncate">{song.title}</h3>
+                  <span className="text-[10px] uppercase text-gold-light mt-1 block">Saved Song</span>
+                </div>
+              ))}
+              {library.length === 0 && <p className="text-sm text-cream/50 col-span-full">No songs saved yet. Type below and hit Save!</p>}
+            </div>
           )}
 
           <AudioEngine mode="worship" onTranscript={handleTranscript} />
@@ -115,7 +115,7 @@ export default function WorshipPage() {
 
               <div className="flex-1 flex flex-col gap-4">
                 <p className="text-xs text-cream/40 uppercase tracking-widest font-bold">Paste Lyrics (Auto-splits every 3 lines)</p>
-                <textarea 
+                <textarea
                   value={masterText}
                   onChange={e => setMasterText(e.target.value)}
                   placeholder="Paste your worship lyrics here..."
@@ -130,68 +130,67 @@ export default function WorshipPage() {
                 <div className="flex items-center justify-between z-10 shrink-0">
                   <h3 className="font-cinzel text-lg font-bold text-cream">Verse Queue</h3>
                   <span className="text-xs font-bold text-forest-light bg-forest/10 px-3 py-1 rounded-full border border-forest/20">
-                     {verses.length} Total Elements
+                    {verses.length} Total Elements
                   </span>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2 relative pointer-events-auto">
-                   {verses.length > 0 ? verses.map((verseLines, idx) => {
-                     const isLive = idx === currentVerseIndex
-                     return (
-                       <button 
-                         key={idx}
-                         onClick={(e) => {
-                           e.stopPropagation()
-                           setCurrentVerseIndex(idx)
-                           // Automatically push when clicked
-                           fetch('/api/control', {
-                             method: 'POST',
-                             body: JSON.stringify({ action: 'setLyrics', lines: verseLines, section: `Verse ${idx + 1}` })
-                           })
-                         }}
-                         className={`w-full text-left p-4 rounded-xl border transition-all pointer-events-auto ${
-                           isLive 
-                           ? 'bg-cream/10 border-cream/50 shadow-[0_0_15px_rgba(242,236,225,0.1)] scale-[1.02]' 
-                           : 'bg-dark/40 border-forest/30 hover:border-gold/50 hover:bg-dark/60 opacity-60 hover:opacity-100'
-                         }`}
-                       >
-                         <div className="flex justify-between items-start mb-2 pointer-events-none">
-                           <span className={`text-[10px] uppercase tracking-widest font-bold ${isLive ? 'text-gold' : 'text-cream/40'}`}>Verse {idx + 1}</span>
-                           {isLive && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 rounded-full border border-red-500/30 animate-pulse">LIVE</span>}
-                         </div>
-                         <div className="space-y-1 pointer-events-none">
-                           {verseLines.map((line, i) => (
-                             <p key={i} className={`text-sm ${isLive ? 'text-cream font-bold' : 'text-cream/70'}`}>{line}</p>
-                           ))}
-                         </div>
-                       </button>
-                     )
-                   }) : <div className="h-full flex items-center justify-center"><p className="text-cream/30 italic text-sm">Paste lyrics to generate dynamic verse blocks...</p></div>}
+                  {verses.length > 0 ? verses.map((verseLines, idx) => {
+                    const isLive = idx === currentVerseIndex
+                    return (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setCurrentVerseIndex(idx)
+                          // Automatically push when clicked
+                          fetch('/api/control', {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'setLyrics', lines: verseLines, section: `Verse ${idx + 1}` })
+                          })
+                        }}
+                        className={`w-full text-left p-4 rounded-xl border transition-all pointer-events-auto ${isLive
+                            ? 'bg-cream/10 border-cream/50 shadow-[0_0_15px_rgba(242,236,225,0.1)] scale-[1.02]'
+                            : 'bg-dark/40 border-forest/30 hover:border-gold/50 hover:bg-dark/60 opacity-60 hover:opacity-100'
+                          }`}
+                      >
+                        <div className="flex justify-between items-start mb-2 pointer-events-none">
+                          <span className={`text-[10px] uppercase tracking-widest font-bold ${isLive ? 'text-gold' : 'text-cream/40'}`}>Verse {idx + 1}</span>
+                          {isLive && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 rounded-full border border-red-500/30 animate-pulse">LIVE</span>}
+                        </div>
+                        <div className="space-y-1 pointer-events-none">
+                          {verseLines.map((line, i) => (
+                            <p key={i} className={`text-sm ${isLive ? 'text-cream font-bold' : 'text-cream/70'}`}>{line}</p>
+                          ))}
+                        </div>
+                      </button>
+                    )
+                  }) : <div className="h-full flex items-center justify-center"><p className="text-cream/30 italic text-sm">Paste lyrics to generate dynamic verse blocks...</p></div>}
                 </div>
 
                 <div className="pt-4 border-t border-forest/20 shrink-0 z-10 flex gap-2">
-                   <button 
-                     onClick={() => {
-                        const prev = Math.max(0, currentVerseIndex - 1)
-                        setCurrentVerseIndex(prev)
-                        fetch('/api/control', { method: 'POST', body: JSON.stringify({ action: 'setLyrics', lines: verses[prev], section: `Verse ${prev + 1}` }) })
-                     }}
-                     disabled={currentVerseIndex === 0 || verses.length === 0}
-                     className="flex-1 py-3 bg-dark/50 hover:bg-forest/20 border border-forest/30 transition-colors rounded-lg text-cream flex justify-center items-center gap-2 disabled:opacity-30 disabled:pointer-events-none"
-                   >
-                     <ChevronLeft className="w-5 h-5"/> Back
-                   </button>
-                   <button 
-                     onClick={() => {
-                        const nxt = Math.min(verses.length - 1, currentVerseIndex + 1)
-                        setCurrentVerseIndex(nxt)
-                        fetch('/api/control', { method: 'POST', body: JSON.stringify({ action: 'setLyrics', lines: verses[nxt], section: `Verse ${nxt + 1}` }) })
-                     }}
-                     disabled={currentVerseIndex === verses.length - 1 || verses.length === 0}
-                     className="flex-[2] py-3 bg-cream hover:bg-white text-forest-dark border border-cream transition-colors rounded-lg font-bold flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
-                   >
-                     Next Verse <ChevronRight className="w-5 h-5"/>
-                   </button>
+                  <button
+                    onClick={() => {
+                      const prev = Math.max(0, currentVerseIndex - 1)
+                      setCurrentVerseIndex(prev)
+                      fetch('/api/control', { method: 'POST', body: JSON.stringify({ action: 'setLyrics', lines: verses[prev], section: `Verse ${prev + 1}` }) })
+                    }}
+                    disabled={currentVerseIndex === 0 || verses.length === 0}
+                    className="flex-1 py-3 bg-dark/50 hover:bg-forest/20 border border-forest/30 transition-colors rounded-lg text-cream flex justify-center items-center gap-2 disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronLeft className="w-5 h-5" /> Back
+                  </button>
+                  <button
+                    onClick={() => {
+                      const nxt = Math.min(verses.length - 1, currentVerseIndex + 1)
+                      setCurrentVerseIndex(nxt)
+                      fetch('/api/control', { method: 'POST', body: JSON.stringify({ action: 'setLyrics', lines: verses[nxt], section: `Verse ${nxt + 1}` }) })
+                    }}
+                    disabled={currentVerseIndex === verses.length - 1 || verses.length === 0}
+                    className="flex-[2] py-3 bg-cream hover:bg-white text-forest-dark border border-cream transition-colors rounded-lg font-bold flex justify-center items-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    Next Verse <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
 

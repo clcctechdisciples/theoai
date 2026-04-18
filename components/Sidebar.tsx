@@ -21,25 +21,25 @@ export function Sidebar() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Background Library State
-  const [backgrounds, setBackgrounds] = useState<{id: string, url: string}[]>([])
+  const [backgrounds, setBackgrounds] = useState<{ id: string, url: string }[]>([])
   const [defaultBgId, setDefaultBgId] = useState<string | null>(null)
 
   useEffect(() => {
     // Load backgrounds on mount
     const savedBgs = localStorage.getItem('theoai_backgrounds')
     if (savedBgs) {
-       try { setBackgrounds(JSON.parse(savedBgs)) } catch(e) {}
+      try { setBackgrounds(JSON.parse(savedBgs)) } catch (e) { }
     }
     const defBg = localStorage.getItem('theoai_default_bg')
     if (defBg) setDefaultBgId(defBg)
-    
+
     // Poll the active background
     const int = setInterval(async () => {
       try {
         const res = await fetch('/api/control')
         const data = await res.json()
         setBackgroundUrl(data.backgroundUrl || '')
-      } catch (e) {}
+      } catch (e) { }
     }, 2000)
     return () => clearInterval(int)
   }, [])
@@ -81,7 +81,7 @@ export function Sidebar() {
     const file = e.target.files?.[0]
     if (file) {
       if (file.size > 2 * 1024 * 1024) return alert("File too large. Please use an image under 2MB.")
-      
+
       const reader = new FileReader()
       reader.onload = async (ev) => {
         const b64 = ev.target?.result as string
@@ -133,11 +133,10 @@ export function Sidebar() {
           const Icon = item.icon
           const content = (
             <div
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-500 ${
-                isActive
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-500 ${isActive
                   ? 'bg-cream/10 border border-cream/20 text-cream glow-white'
                   : 'text-white/40 hover:bg-white/5 hover:text-white'
-              }`}
+                }`}
             >
               <Icon className={`w-5 h-5 ${isActive ? 'text-cream' : ''}`} />
               <span className="font-semibold text-sm tracking-tight">{item.label}</span>
@@ -156,18 +155,17 @@ export function Sidebar() {
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 flex items-center gap-2 mb-3">
             <Monitor className="w-3 h-3" /> Projector
           </label>
-          
+
           <div className="flex bg-dark-900 rounded-lg p-1 border border-white/5 mb-4">
             {['idle', 'worship', 'sermon'].map(m => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 disabled={loading}
-                className={`flex-1 py-1.5 rounded-md font-bold text-[10px] uppercase tracking-wider transition-all ${
-                  currentMode === m 
-                  ? 'bg-cream/80 text-dark-950 shadow-md' 
-                  : 'text-white/40 hover:text-white hover:bg-white/5'
-                }`}
+                className={`flex-1 py-1.5 rounded-md font-bold text-[10px] uppercase tracking-wider transition-all ${currentMode === m
+                    ? 'bg-cream/80 text-dark-950 shadow-md'
+                    : 'text-white/40 hover:text-white hover:bg-white/5'
+                  }`}
               >
                 {m}
               </button>
@@ -178,38 +176,38 @@ export function Sidebar() {
         <div className="mt-8 px-4 mb-4 z-50">
           <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest pl-2 mb-3 max-w-[200px]">Projector Backgrounds</h3>
           <div className="space-y-2 relative h-48 overflow-visible">
-            <button 
+            <button
               onClick={() => handleSetBackground('')}
               className={`w-full py-2 rounded-lg border text-[10px] font-bold transition-all flex items-center justify-center gap-2 ${!backgroundUrl ? 'border-cream/80 bg-cream/10 text-cream' : 'border-white/10 text-white/40 hover:border-white/30'}`}
             >
               <div className="w-2 h-2 bg-black border border-white/20 rounded-sm"></div> Default Black Layer
             </button>
-            
+
             <div className="max-h-32 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-               {backgrounds.map(bg => {
-                 const isActive = backgroundUrl === bg.url;
-                 const isDefault = defaultBgId === bg.id;
-                 return (
-                   <div 
-                     key={bg.id} 
-                     onClick={() => handleSetBackground(bg.url)}
-                     className={`w-full relative py-2 px-3 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-2 cursor-pointer group ${isActive ? 'border-cream bg-cream/5 text-cream' : 'border-white/10 text-white/40 hover:border-white/30'}`}
-                   >
-                     <div className="w-4 h-4 rounded-[2px] bg-cover bg-center shrink-0 border border-white/20" style={{ backgroundImage: `url(${bg.url})` }} />
-                     <span className="truncate flex-1">Custom Image</span>
-                     
-                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2">
-                       <button onClick={(e) => toggleDefaultBg(bg.id, e)} className={`p-1 rounded hover:bg-white/10 ${isDefault ? 'text-gold opacity-100' : 'text-white/40'}`} title={isDefault ? "Clear Default" : "Set as Default"}>
-                         ★
-                       </button>
-                       <button onClick={(e) => removeBackground(bg.id, e)} className="p-1 rounded hover:bg-red-500/20 text-red-400" title="Delete">
-                         <span className="text-[10px]">✕</span>
-                       </button>
-                     </div>
-                     {isDefault && <span className="absolute -top-1 -right-1 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span></span>}
-                   </div>
-                 )
-               })}
+              {backgrounds.map(bg => {
+                const isActive = backgroundUrl === bg.url;
+                const isDefault = defaultBgId === bg.id;
+                return (
+                  <div
+                    key={bg.id}
+                    onClick={() => handleSetBackground(bg.url)}
+                    className={`w-full relative py-2 px-3 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-2 cursor-pointer group ${isActive ? 'border-cream bg-cream/5 text-cream' : 'border-white/10 text-white/40 hover:border-white/30'}`}
+                  >
+                    <div className="w-4 h-4 rounded-[2px] bg-cover bg-center shrink-0 border border-white/20" style={{ backgroundImage: `url(${bg.url})` }} />
+                    <span className="truncate flex-1">Custom Image</span>
+
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2">
+                      <button onClick={(e) => toggleDefaultBg(bg.id, e)} className={`p-1 rounded hover:bg-white/10 ${isDefault ? 'text-gold opacity-100' : 'text-white/40'}`} title={isDefault ? "Clear Default" : "Set as Default"}>
+                        ★
+                      </button>
+                      <button onClick={(e) => removeBackground(bg.id, e)} className="p-1 rounded hover:bg-red-500/20 text-red-400" title="Delete">
+                        <span className="text-[10px]">✕</span>
+                      </button>
+                    </div>
+                    {isDefault && <span className="absolute -top-1 -right-1 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span></span>}
+                  </div>
+                )
+              })}
             </div>
 
             <div className="relative mt-2">

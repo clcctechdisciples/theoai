@@ -8,35 +8,37 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        blue: {
-          50: '#e6f7f5',
-          100: '#c2f0e7',
-          200: '#8ae2d2',
-          300: '#4bccb7',
-          400: '#23a893',
-          500: '#069c84',
-          600: '#047361',
-          DEFAULT: '#047361',
+        forest: {
+          50: '#E8EFE7',
+          100: '#D1DFCF',
+          200: '#A4BF9F',
+          300: '#779F6F',
+          400: '#4A7F3F',
+          500: '#2D5A27',
+          600: '#244920',
+          700: '#1A3316',
+          DEFAULT: '#2D5A27',
+        },
+        cream: {
+          50: '#FDFCFB',
+          100: '#FBF9F6',
+          200: '#F5F0E8',
+          300: '#EBE2D0',
+          400: '#DCCEB8',
+          500: '#CDBAA0',
+          DEFAULT: '#F5F0E8',
+        },
+        gold: {
+          light: '#E8C86A',
+          DEFAULT: '#C9A84C',
+          dark: '#A6883B',
         },
         dark: {
-          950: '#011410',
-          900: '#021c17',
-          800: '#03211c',
-          700: '#053b32',
-          600: '#075246',
-          DEFAULT: '#011410',
+          950: '#0A0F0A',
+          900: '#0F1A0E',
+          800: '#162214',
+          DEFAULT: '#0F1A0E',
         },
-        cream: '#F5F5F5',
-        gold: {
-          light: '#ceb382',
-          DEFAULT: '#b39b6d',
-          dark: '#8b754a',
-        },
-        forest: {
-          light: '#069c84',
-          DEFAULT: '#047361',
-          dark: '#024b3f'
-        }
       },
       fontFamily: {
         cinzel: ['Cinzel', 'serif'],
@@ -55,8 +57,8 @@ module.exports = {
         fadeOut: { '0%': { opacity: '1' }, '100%': { opacity: '0' } },
         slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
         pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 10px rgba(206,179,130,0.3)' },
-          '50%': { boxShadow: '0 0 30px rgba(206,179,130,0.7)' },
+          '0%, 100%': { boxShadow: '0 0 10px rgba(201,168,76,0.3)' },
+          '50%': { boxShadow: '0 0 30px rgba(201,168,76,0.7)' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
