@@ -3,6 +3,7 @@ let globalState = {
   scripture: null as { reference: string, text: string } | null,
   lyricLines: [] as string[],
   lyricSection: '', // Verse, Chorus, etc.
+  backgroundUrl: null as string | null,
 }
 
 export async function GET() {
@@ -26,6 +27,8 @@ export async function POST(req: Request) {
     globalState.lyricLines = data.lines
     globalState.lyricSection = data.section || ''
     globalState.mode = 'worship'
+  } else if (data.action === 'setBackground') {
+    globalState.backgroundUrl = data.url
   }
 
   return Response.json({ success: true, state: globalState })

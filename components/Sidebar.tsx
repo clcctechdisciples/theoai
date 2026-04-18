@@ -19,10 +19,10 @@ export function Sidebar() {
   if (pathname === '/display') return null
 
   return (
-    <div className="w-64 h-full bg-dark-card border-r border-forest/30 flex flex-col pt-6">
-      <div className="px-6 mb-8">
-        <h2 className="font-cinzel text-2xl font-bold gold-text tracking-wider">Theo AI</h2>
-        <p className="text-forest-light text-[10px] tracking-widest uppercase mt-1">CLCC Tech Disciples</p>
+    <div className="w-64 h-full bg-dark-950 border-r border-dark-800 flex flex-col pt-8">
+      <div className="px-8 mb-10 group cursor-default">
+        <h2 className="font-cinzel text-2xl font-black tracking-tighter text-white group-hover:text-blue-400 transition-colors">THEO AI</h2>
+        <div className="h-0.5 w-8 bg-blue-500 mt-1 transition-all group-hover:w-16"></div>
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
@@ -31,14 +31,14 @@ export function Sidebar() {
           const Icon = item.icon
           const content = (
             <div
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-500 ${
                 isActive
-                  ? 'bg-forest/20 border border-forest/40 text-gold-light glow-green'
-                  : 'text-cream/70 hover:bg-forest/10 hover:text-cream'
+                  ? 'bg-blue-500/10 border border-blue-500/20 text-white glow-blue'
+                  : 'text-white/40 hover:bg-white/5 hover:text-white'
               }`}
             >
-              <Icon className="w-5 h-5" />
-              <span className="font-medium text-sm">{item.label}</span>
+              <Icon className={`w-5 h-5 ${isActive ? 'text-blue-400' : ''}`} />
+              <span className="font-semibold text-sm tracking-tight">{item.label}</span>
             </div>
           )
 
@@ -58,13 +58,13 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-forest/30 mt-auto space-y-2 px-4">
+      <div className="p-6 border-t border-dark-800 mt-auto px-6">
         <button
           onClick={() => signOut()}
-          className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-cream/70 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+          className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-white/30 hover:bg-red-500/5 hover:text-red-400 transition-all duration-300 group"
         >
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium text-sm">Sign Out</span>
+          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-semibold text-sm tracking-tight">Sign Out</span>
         </button>
       </div>
     </div>

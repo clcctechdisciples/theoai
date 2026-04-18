@@ -8,15 +8,25 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        cream: '#F5F0E8',
-        'cream-dark': '#EDE5D0',
-        forest: '#2D5A27',
-        'forest-light': '#4A7C59',
-        'forest-dark': '#1A3A15',
-        gold: '#C9A84C',
-        'gold-light': '#E8C86A',
-        dark: '#0F1A0E',
-        'dark-card': '#162214',
+        blue: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          DEFAULT: '#3b82f6',
+        },
+        dark: {
+          950: '#000000',
+          900: '#0a0a0c',
+          800: '#111318',
+          700: '#1c1f26',
+          600: '#2d313d',
+          DEFAULT: '#000000',
+        },
+        cream: '#F5F5F5',
+        gold: '#C9A84C', // Keep briefly for legacy or sub-accents if needed
       },
       fontFamily: {
         cinzel: ['Cinzel', 'serif'],

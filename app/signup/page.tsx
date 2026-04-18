@@ -40,39 +40,40 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gold/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-forest/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden font-inter">
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40 bg-[radial-gradient(circle_at_center,_#1e3a8a_0%,_transparent_70%)]" />
+      <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px]" />
+      <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px]" />
 
-      <div className="glass-card w-full max-w-md p-8 rounded-2xl shadow-2xl relative z-10 border border-gold/20">
-        <div className="flex flex-col items-center mb-8">
-          <h1 className="font-cinzel text-3xl font-bold text-cream tracking-wide">Register Account</h1>
-          <p className="text-forest-light text-xs tracking-widest mt-2 uppercase font-semibold">Theo AI System</p>
+      <div className="glass-card w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative z-10 border border-white/10">
+        <div className="flex flex-col items-center mb-10">
+          <h1 className="font-cinzel text-5xl font-black text-white tracking-tighter text-center">JOIN THEO</h1>
+          <div className="h-1 w-12 bg-blue-500 mt-2 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-3 rounded-lg text-sm text-center">{error}</div>}
           {success && <div className="bg-forest/20 border border-forest/50 text-cream p-3 rounded-lg text-sm text-center">{success}</div>}
           
-          <div>
-            <label className="block text-cream/70 text-xs uppercase tracking-wider mb-2">Username</label>
+          <div className="space-y-2">
+            <label className="block text-white/40 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Username</label>
             <input
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              className="w-full bg-dark border border-forest/40 rounded-lg px-4 py-3 text-cream focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-cream/70 text-xs uppercase tracking-wider mb-2">Password</label>
+          <div className="space-y-2">
+            <label className="block text-white/40 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full bg-dark border border-forest/40 rounded-lg px-4 py-3 text-cream focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
               required
             />
           </div>
@@ -80,14 +81,14 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full forest-gradient text-cream font-medium py-3 rounded-lg hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-forest-light/50 transition-all shadow-lg flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl hover:bg-blue-500 active:scale-[0.98] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 mt-4"
           >
-            {loading ? <div className="w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" /> : 'Create Account'}
+            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Create Account'}
           </button>
         </form>
 
-        <p className="text-center text-xs text-cream/50 mt-8">
-          Already have an account? <Link href="/login" className="text-gold hover:underline">Sign In</Link>
+        <p className="text-center text-[10px] font-bold text-white/20 uppercase tracking-widest mt-10">
+          Already have an account? <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors">Sign In</Link>
         </p>
       </div>
     </div>

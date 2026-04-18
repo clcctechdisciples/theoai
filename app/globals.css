@@ -5,16 +5,13 @@
 @tailwind utilities;
 
 :root {
-  --cream: #F5F0E8;
-  --cream-dark: #EDE5D0;
-  --forest: #2D5A27;
-  --forest-light: #4A7C59;
-  --forest-dark: #1A3A15;
-  --gold: #C9A84C;
-  --gold-light: #E8C86A;
-  --dark: #0F1A0E;
-  --dark-card: #162214;
-  --dark-border: #2A3F28;
+  --blue: #3b82f6;
+  --blue-light: #60a5fa;
+  --dark-bg: #000000;
+  --dark-card: #111318;
+  --dark-border: #1c1f26;
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.6);
 }
 
 * {
@@ -25,8 +22,8 @@
 
 html, body {
   height: 100%;
-  background-color: var(--dark);
-  color: var(--cream);
+  background-color: var(--dark-bg);
+  color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -39,31 +36,31 @@ html, body {
 
 /* Glass card */
 .glass-card {
-  background: rgba(22, 34, 20, 0.85);
-  border: 1px solid rgba(74, 124, 89, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(17, 19, 24, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-/* Gold gradient text */
-.gold-text {
-  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+/* Blue gradient text */
+.accent-text {
+  background: linear-gradient(135deg, var(--blue-light), var(--blue));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Forest gradient bg */
-.forest-gradient {
-  background: linear-gradient(135deg, var(--forest-dark), var(--forest));
+/* Modern gradient bg */
+.accent-gradient {
+  background: linear-gradient(135deg, #1e3a8a, var(--blue));
 }
 
 /* Glow effects */
-.glow-gold {
-  box-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
 }
-.glow-green {
-  box-shadow: 0 0 20px rgba(74, 124, 89, 0.3);
+.glow-white {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
 /* Animated border */

@@ -66,23 +66,26 @@ export function ChatWidget() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full forest-gradient shadow-xl glow-green flex items-center justify-center transition-transform hover:scale-110 z-40 ${isOpen ? 'scale-0' : 'scale-100'}`}
+        className={`fixed bottom-8 right-8 w-16 h-16 rounded-2xl bg-blue-600 shadow-2xl shadow-blue-500/20 flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 group z-40 ${isOpen ? 'scale-0' : 'scale-100'}`}
       >
-        <MessageCircle className="w-6 h-6 text-cream" />
+        <MessageCircle className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" />
       </button>
 
-      <div className={`fixed bottom-6 right-6 w-80 sm:w-96 glass-card rounded-2xl shadow-2xl flex flex-col transition-all duration-500 origin-bottom-right z-50 ${isOpen ? 'scale-100 opacity-100' : 'scale-75 opacity-0 pointer-events-none'}`} style={{ height: '500px' }}>
-        <div className="flex items-center justify-between p-4 border-b border-forest/30 bg-forest-dark/50 rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full border border-gold/40 bg-dark flex items-center justify-center glow-gold">
-              <img src="/logo.png" alt="Theo" className="w-5 h-5 object-contain" />
+      <div className={`fixed bottom-8 right-8 w-80 sm:w-96 glass-card rounded-3xl shadow-2xl flex flex-col transition-all duration-700 origin-bottom-right z-50 ${isOpen ? 'scale-100 opacity-100' : 'scale-75 opacity-0 pointer-events-none'}`} style={{ height: '600px' }}>
+        <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5 rounded-t-3xl">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+              <img src="/logo.png" alt="Theo" className="w-6 h-6 object-contain" />
             </div>
             <div>
-              <h3 className="font-cinzel font-bold text-gold-light text-sm">Theo AI</h3>
-              <p className="text-[10px] text-cream/50 uppercase tracking-widest">System Assistant</p>
+              <h3 className="font-bold text-white text-base tracking-tight">Theo AI</h3>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">Active Assistant</p>
+              </div>
             </div>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-cream/50 hover:text-cream transition-colors">
+          <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-full hover:bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-all">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -95,10 +98,10 @@ export function ChatWidget() {
           )}
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-3 rounded-xl text-sm ${
+              <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
                 m.role === 'user' 
-                ? 'bg-forest/40 border border-forest-light/30 rounded-br-none' 
-                : 'bg-dark/60 border border-gold/20 rounded-bl-none text-cream/90'
+                ? 'bg-blue-600 text-white rounded-br-none shadow-lg shadow-blue-500/10' 
+                : 'bg-white/5 border border-white/10 rounded-bl-none text-white/90'
               }`}>
                 {/* Remove system commands from UI display */}
                 {m.content.replace(/YES_SWITCH_[A-Z]+|YES_SHOW_SCRIPTURE_[^\s]+/g, '').trim()}
@@ -107,26 +110,26 @@ export function ChatWidget() {
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-dark/60 border border-gold/20 rounded-xl rounded-bl-none p-4 flex gap-1 items-center">
-                <div className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce"></div>
+              <div className="bg-white/5 border border-white/10 rounded-2xl rounded-bl-none p-4 flex gap-1.5 items-center">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
               </div>
             </div>
           )}
         </div>
 
-        <form onSubmit={sendMessage} className="p-3 border-t border-forest/30 bg-dark/40 rounded-b-2xl">
+        <form onSubmit={sendMessage} className="p-4 bg-white/5 border-t border-white/10 rounded-b-3xl">
           <div className="relative">
             <input
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Type a command or question..."
-              className="w-full bg-dark border border-forest/50 rounded-lg pl-4 pr-10 py-2.5 text-sm text-cream focus:outline-none focus:border-gold transition-colors"
+              placeholder="How can I help today?"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-5 pr-12 py-4 text-sm text-white focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all placeholder:text-white/20"
             />
-            <button type="submit" disabled={!input.trim() || loading} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest-light hover:text-gold transition-colors disabled:opacity-50">
-              <Send className="w-4 h-4" />
+            <button type="submit" disabled={!input.trim() || loading} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:grayscale transition-all">
+              <Send className="w-5 h-5" />
             </button>
           </div>
         </form>

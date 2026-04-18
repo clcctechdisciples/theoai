@@ -30,19 +30,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden font-inter">
       {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gold/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-forest/10 rounded-full blur-[120px]" />
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40 bg-[radial-gradient(circle_at_center,_#1e3a8a_0%,_transparent_70%)]" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px]" />
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px]" />
 
-      <div className="glass-card w-full max-w-md p-8 rounded-2xl shadow-2xl relative z-10 border border-gold/20">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 rounded-full border border-gold/40 mb-4 p-1 overflow-hidden bg-forest-dark flex items-center justify-center shadow-lg glow-gold">
+      <div className="glass-card w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative z-10 border border-white/10">
+        <div className="flex flex-col items-center mb-10">
+          <div className="w-24 h-24 rounded-3xl bg-blue-600/10 flex items-center justify-center mb-6 border border-blue-500/20 shadow-2xl shadow-blue-500/10">
             <Image src="/logo.png" alt="Logo" width={64} height={64} className="object-contain" />
           </div>
-          <h1 className="font-cinzel text-3xl font-bold gold-text tracking-wide">Theo AI</h1>
-          <p className="text-forest-light text-xs tracking-widest mt-1 uppercase font-semibold">CLCC Tech Disciples</p>
+          <h1 className="font-cinzel text-5xl font-black text-white tracking-tighter">THEO AI</h1>
+          <div className="h-1 w-12 bg-blue-500 mt-2 rounded-full"></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -52,24 +52,24 @@ export default function LoginPage() {
             </div>
           )}
           
-          <div>
-            <label className="block text-cream/70 text-xs uppercase tracking-wider mb-2">Username</label>
+          <div className="space-y-2">
+            <label className="block text-white/40 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Username</label>
             <input
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              className="w-full bg-dark border border-forest/40 rounded-lg px-4 py-3 text-cream focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-cream/70 text-xs uppercase tracking-wider mb-2">Password</label>
+          <div className="space-y-2">
+            <label className="block text-white/40 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full bg-dark border border-forest/40 rounded-lg px-4 py-3 text-cream focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
               required
             />
           </div>
@@ -77,14 +77,14 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full forest-gradient text-cream font-medium py-3 rounded-lg hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-forest-light/50 transition-all shadow-lg flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl hover:bg-blue-500 active:scale-[0.98] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 mt-4"
           >
-            {loading ? <div className="w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin" /> : 'Enter System'}
+            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Initialize System'}
           </button>
         </form>
 
-        <p className="text-center text-xs text-cream/50 mt-8">
-          Don't have an account? <a href="/signup" className="text-gold hover:underline">Create Account</a>
+        <p className="text-center text-[10px] font-bold text-white/20 uppercase tracking-widest mt-10">
+          Authorized Personnel Only • <a href="/signup" className="text-blue-400 hover:text-blue-300 transition-colors">Create Account</a>
         </p>
       </div>
     </div>
