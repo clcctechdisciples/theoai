@@ -27,14 +27,8 @@ export default function AudioPage() {
             <p className="text-cream/60 mt-2">Manage full service recordings and extracted highlight clips.</p>
           </header>
 
-          <div className="glass-card rounded-2xl p-8 mb-8 border border-forest/30 flex justify-between items-center bg-dark/50">
-            <div>
-              <h2 className="font-cinzel text-lg font-bold text-cream">Export Settings</h2>
-              <p className="text-sm text-cream/50 mt-1">Configure auto-export quality and highlight detection sensitivity.</p>
-            </div>
-            <button className="px-4 py-2 bg-dark border border-forest/30 rounded-lg text-cream/70 hover:text-cream hover:border-gold transition-colors flex items-center gap-2">
-              <Settings2 className="w-4 h-4" /> Configure
-            </button>
+          <div className="mb-4">
+             {/* Removed Configure Settings block per user request */}
           </div>
 
           <div className="space-y-4">
@@ -45,28 +39,40 @@ export default function AudioPage() {
             )}
             {recordings.map(rec => (
               <div key={rec.id} className="glass-card p-4 rounded-xl border border-forest/20 flex flex-col md:flex-row items-center justify-between gap-4 hover:border-gold/30 transition-all group">
-                <div className="flex items-center gap-4 flex-1 w-full">
-                  <button className="w-10 h-10 rounded-full bg-forest/20 flex items-center justify-center shrink-0 group-hover:bg-gold/20 group-hover:text-gold transition-colors text-forest-light">
-                    <Play className="w-4 h-4 ml-1" />
-                  </button>
-                  <div>
-                    <h3 className="font-bold text-cream">{rec.title}</h3>
-                    <div className="flex gap-3 text-xs text-cream/50 mt-1 uppercase tracking-wider">
-                      <span>{rec.date}</span>
-                      <span>&bull;</span>
-                      <span>{rec.duration}</span>
-                      <span>&bull;</span>
-                      <span className="text-gold-light">{rec.type}</span>
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="flex items-center gap-4 flex-1 w-full">
+                    <div className="w-10 h-10 rounded-full bg-forest/20 flex items-center justify-center shrink-0 group-hover:bg-gold/20 group-hover:text-gold transition-colors text-forest-light">
+                      <Disc className="w-5 h-5" />
                     </div>
+                    <div>
+                      <h3 className="font-bold text-cream">{rec.title}</h3>
+                      <div className="flex gap-3 text-xs text-cream/50 mt-1 uppercase tracking-wider">
+                        <span>{rec.date}</span>
+                        <span>&bull;</span>
+                        <span className="text-gold-light">{rec.type}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="w-full flex items-center gap-4 bg-dark/30 rounded-lg p-2 border border-forest/10">
+                    <audio controls className="w-full h-10 custom-audio" src={`/api/recordings/play?file=${rec.filename}`}>
+                      Your browser does not support the audio element.
+                    </audio>
                   </div>
                 </div>
 
-                <div className="flex gap-3 w-full md:w-auto">
-                  <button className="flex-1 md:flex-none px-4 flex items-center justify-center gap-2 py-2 bg-forest-dark border border-forest-light/30 rounded-lg text-cream/80 hover:bg-forest/50 hover:text-cream transition-colors font-medium text-sm">
-                    <Download className="w-4 h-4" /> MP3
-                  </button>
-                  <button className="flex-1 md:flex-none px-4 flex items-center justify-center gap-2 py-2 bg-dark hover:bg-gold/10 border border-gold/30 rounded-lg text-gold-light hover:text-gold transition-colors font-medium text-sm">
-                    <Download className="w-4 h-4" /> WAV
+                <div className="flex gap-3 w-full md:w-auto h-full flex-col justify-center">
+                  <a href={`/api/recordings/play?file=${rec.filename}&download=1`} download={rec.filename} className="px-4 flex items-center justify-center gap-2 py-2 bg-forest-dark border border-forest-light/30 rounded-lg text-cream/80 hover:bg-forest/50 hover:text-cream transition-colors font-medium text-sm">
+                    <Download className="w-4 h-4" /> Download Original ({rec.type})
+                  </a>
+                  <button onClick={async () => {
+                    const confirmDeletion = confirm(`Permanently delete ${rec.title}?`);
+                    if (confirmDeletion) {
+                       await fetch('/api/recordings/delete', { method: 'POST', body: JSON.stringify({ filename: rec.filename }), headers: { 'Content-Type': 'application/json' } })
+                       window.location.reload()
+                    }
+                  }} className="px-4 flex items-center justify-center gap-2 py-2 bg-dark/50 border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-colors font-medium text-sm rounded-lg">
+                     Delete
                   </button>
                 </div>
               </div>

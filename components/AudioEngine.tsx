@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import { Mic, Square, AlertCircle } from 'lucide-react'
+import { Mic, Square, AlertCircle, Settings2 } from 'lucide-react'
 
 // Inform TypeScript about window.SpeechRecognition
 declare global {
@@ -10,13 +10,29 @@ declare global {
   }
 }
 
-export function AudioEngine({ mode, onTranscript }: { mode: 'worship' | 'sermon', onTranscript: (text: string) => void }) {
+export function AudioEngine({ mode, onTranscript, onRecordingComplete }: { mode: 'worship' | 'sermon', onTranscript: (text: string, isFinal?: boolean) => void, onRecordingComplete?: (blob: Blob) => void }) {
   const [isRecording, setIsRecording] = useState(false)
   const [error, setError] = useState('')
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('default')
+  
   const recognitionRef = useRef<any>(null)
   const intendedToRecordRef = useRef(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const sessionIdRef = useRef('')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theoai_mic_device')
+    if (saved) setSelectedDeviceId(saved)
+
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
+        navigator.mediaDevices.enumerateDevices().then(d => {
+          setDevices(d.filter(device => device.kind === 'audioinput'))
+        }).catch(() => {})
+      }).catch(() => {})
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -28,14 +44,14 @@ export function AudioEngine({ mode, onTranscript }: { mode: 'worship' | 'sermon'
 
       const recognition = new SpeechRecognition()
       recognition.continuous = true
-      recognition.interimResults = false 
+      recognition.interimResults = true 
       recognition.lang = 'en-US'
       
       recognition.onresult = (event: any) => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            const text = event.results[i][0].transcript.trim()
-            if (text) onTranscript(text)
+          const text = event.results[i][0].transcript.trim()
+          if (text) {
+            onTranscript(text, event.results[i].isFinal)
           }
         }
       }
@@ -70,17 +86,27 @@ export function AudioEngine({ mode, onTranscript }: { mode: 'worship' | 'sermon'
     } else {
       try {
          // Start Audio Archiving to backend
-         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-         sessionIdRef.current = Math.random().toString(36).substring(7)
-         
+         const stream = await navigator.mediaDevices.getUserMedia({ 
+           audio: selectedDeviceId !== 'default' ? { deviceId: { exact: selectedDeviceId } } : true 
+         })
          const mr = new MediaRecorder(stream)
+         let localChunks: Blob[] = []
+         
          mr.ondataavailable = async (e) => {
-           if (e.data.size > 0 && intendedToRecordRef.current) {
+           if (e.data.size > 0 && intendedToRecordRef.current && mode === 'sermon') {
+             localChunks.push(e.data)
              const formData = new FormData()
              formData.append('audio', e.data)
              formData.append('sessionId', sessionIdRef.current)
              formData.append('mode', mode)
              try { await fetch('/api/recordings/upload', { method: 'POST', body: formData }) } catch(e) {}
+           }
+         }
+         mr.onstop = () => {
+           if (mode === 'sermon' && localChunks.length > 0) {
+             const finalBlob = new Blob(localChunks, { type: 'audio/webm' })
+             if (onRecordingComplete) onRecordingComplete(finalBlob)
+             localChunks = []
            }
          }
          mr.start(5000) // send every 5 seconds
@@ -96,8 +122,8 @@ export function AudioEngine({ mode, onTranscript }: { mode: 'worship' | 'sermon'
   }
 
   return (
-    <div className="glass-card p-4 flex items-center gap-4 rounded-xl mb-6 border border-forest/30">
-      <div className="flex-1">
+    <div className="glass-card p-4 flex items-center gap-4 rounded-xl mb-6 border border-forest/30 flex-wrap">
+      <div className="flex-1 min-w-[200px]">
         <label className="text-xs text-cream/70 uppercase tracking-wider block mb-1">Audio Input Mode</label>
         {error ? (
           <div className="text-red-400 text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4"/> {error}</div>
@@ -106,7 +132,24 @@ export function AudioEngine({ mode, onTranscript }: { mode: 'worship' | 'sermon'
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 bg-dark/50 border border-forest/20 rounded-lg pr-4 pl-3 py-1.5 min-w-[200px]">
+        <Settings2 className="w-4 h-4 text-forest-light" />
+        <select 
+          value={selectedDeviceId}
+          onChange={e => setSelectedDeviceId(e.target.value)}
+          disabled={isRecording}
+          className="bg-transparent border-none text-xs text-cream/80 focus:outline-none flex-1 truncate max-w-[200px]"
+        >
+          <option value="default" className="bg-dark text-cream">Default System Microphone</option>
+          {devices.map(d => (
+            <option key={d.deviceId} value={d.deviceId} className="bg-dark text-cream">
+              {d.label || `Microphone ${d.deviceId.substring(0,5)}...`}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center gap-4 ml-auto">
         {isRecording && <div className="text-red-400 text-xs font-bold uppercase record-pulse flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /> LIVE RECOGNITION</div>}
         <button
           onClick={toggleRecording}

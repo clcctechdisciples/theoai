@@ -9,24 +9,34 @@ module.exports = {
     extend: {
       colors: {
         blue: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          DEFAULT: '#3b82f6',
+          50: '#e6f7f5',
+          100: '#c2f0e7',
+          200: '#8ae2d2',
+          300: '#4bccb7',
+          400: '#23a893',
+          500: '#069c84',
+          600: '#047361',
+          DEFAULT: '#047361',
         },
         dark: {
-          950: '#000000',
-          900: '#0a0a0c',
-          800: '#111318',
-          700: '#1c1f26',
-          600: '#2d313d',
-          DEFAULT: '#000000',
+          950: '#011410',
+          900: '#021c17',
+          800: '#03211c',
+          700: '#053b32',
+          600: '#075246',
+          DEFAULT: '#011410',
         },
         cream: '#F5F5F5',
-        gold: '#C9A84C', // Keep briefly for legacy or sub-accents if needed
+        gold: {
+          light: '#ceb382',
+          DEFAULT: '#b39b6d',
+          dark: '#8b754a',
+        },
+        forest: {
+          light: '#069c84',
+          DEFAULT: '#047361',
+          dark: '#024b3f'
+        }
       },
       fontFamily: {
         cinzel: ['Cinzel', 'serif'],
@@ -45,8 +55,8 @@ module.exports = {
         fadeOut: { '0%': { opacity: '1' }, '100%': { opacity: '0' } },
         slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
         pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 10px rgba(201,168,76,0.3)' },
-          '50%': { boxShadow: '0 0 30px rgba(201,168,76,0.7)' },
+          '0%, 100%': { boxShadow: '0 0 10px rgba(206,179,130,0.3)' },
+          '50%': { boxShadow: '0 0 30px rgba(206,179,130,0.7)' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },

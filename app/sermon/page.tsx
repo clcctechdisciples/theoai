@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
-import { ModeBar } from '@/components/ModeBar'
+
 import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
 import { FileText, Download, CheckCircle2, FileDown } from 'lucide-react'
@@ -9,8 +9,10 @@ import { FileText, Download, CheckCircle2, FileDown } from 'lucide-react'
 export default function SermonPage() {
   const [globalMode, setGlobalMode] = useState('idle')
   const [transcript, setTranscript] = useState('')
+  const [interimTranscript, setInterimTranscript] = useState('')
   const [generating, setGenerating] = useState(false)
   const [summary, setSummary] = useState<string | null>(null)
+  const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null)
   
   const endRef = useRef<HTMLDivElement>(null)
 
@@ -20,10 +22,15 @@ export default function SermonPage() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [transcript])
+  }, [transcript, interimTranscript])
 
-  const handleTranscript = (text: string) => {
-    setTranscript(prev => prev + ' ' + text)
+  const handleTranscript = (text: string, isFinal?: boolean) => {
+    if (isFinal) {
+      setTranscript(prev => prev + ' ' + text + '.')
+      setInterimTranscript('')
+    } else {
+      setInterimTranscript(text)
+    }
   }
 
   const generateSummary = async () => {
@@ -38,6 +45,25 @@ export default function SermonPage() {
       const data = await res.json()
       if (data.summary) {
         setSummary(data.summary)
+
+        let derivedTitle = 'Theo-Sermon'
+        const titleMatch = data.summary.match(/^#+\s(.*?)$/m)
+        if (titleMatch && titleMatch[1]) {
+           derivedTitle = titleMatch[1].trim().replace(/[^a-zA-Z0-9 -]/g, '')
+        }
+
+        if (pendingAudioBlob) {
+           const url = URL.createObjectURL(pendingAudioBlob)
+           const a = document.createElement('a')
+           a.style.display = 'none'
+           a.href = url
+           a.download = `${derivedTitle}-${new Date().toISOString().split('T')[0]}.mp4`
+           document.body.appendChild(a)
+           a.click()
+           setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 100)
+           setPendingAudioBlob(null)
+        }
+
       } else {
         alert('Failed to generate summary.')
       }
@@ -49,7 +75,7 @@ export default function SermonPage() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <ModeBar currentMode={globalMode} />
+
         
         <main className="flex-1 overflow-y-auto p-8 relative flex flex-col">
           <header className="mb-6">
@@ -57,7 +83,7 @@ export default function SermonPage() {
             <p className="text-cream/60 mt-1">Live transcription and AI-powered sermon synthesis.</p>
           </header>
 
-          <AudioEngine mode="sermon" onTranscript={handleTranscript} />
+          <AudioEngine mode="sermon" onTranscript={handleTranscript} onRecordingComplete={setPendingAudioBlob} />
 
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
             {/* Live Transcript Log */}
@@ -69,8 +95,11 @@ export default function SermonPage() {
                 {transcript && <div className="text-xs text-cream/50 uppercase tracking-widest">{transcript.split(' ').length} words</div>}
               </div>
               <div className="p-6 overflow-y-auto flex-1 font-inter text-cream/80 leading-relaxed text-lg bg-dark/40">
-                {transcript ? (
-                  <p>{transcript}</p>
+                {transcript || interimTranscript ? (
+                  <p>
+                    {transcript}
+                    <span className="text-cream/40 italic ml-2">{interimTranscript}</span>
+                  </p>
                 ) : (
                   <div className="flex items-center justify-center h-full text-cream/30 italic">
                     Start the audio engine to begin transcribing...

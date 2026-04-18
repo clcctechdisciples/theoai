@@ -1,5 +1,6 @@
-'use client'
 import { useEffect, useState } from 'react'
+import { Monitor, Maximize } from 'lucide-react'
+import { Sidebar } from '@/components/Sidebar'
 
 type State = {
   mode: string
@@ -11,6 +12,8 @@ type State = {
 
 export default function DisplayPage() {
   const [state, setState] = useState<State>({ mode: 'idle', scripture: null, lyricLines: [], lyricSection: '', backgroundUrl: null })
+  const [screens, setScreens] = useState<any[]>([])
+  const [uiVisible, setUiVisible] = useState(true)
 
   useEffect(() => {
     // Poll the control server every 1 second
@@ -26,8 +29,82 @@ export default function DisplayPage() {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    let timeout: NodeJS.Timeout
+    const hideUi = () => setUiVisible(false)
+    const showUi = () => {
+      setUiVisible(true)
+      clearTimeout(timeout)
+      timeout = setTimeout(hideUi, 3000)
+    }
+    
+    window.addEventListener('mousemove', showUi)
+    timeout = setTimeout(hideUi, 3000)
+    
+    return () => {
+      window.removeEventListener('mousemove', showUi)
+      clearTimeout(timeout)
+    }
+  }, [])
+
+  const requestScreens = async () => {
+    if (!('getScreenDetails' in window)) {
+      alert("Window Management API not supported in this browser.")
+      return
+    }
+    try {
+      const details = await (window as any).getScreenDetails()
+      setScreens(details.screens)
+      
+      details.addEventListener('screenschange', () => {
+        setScreens(details.screens)
+      })
+    } catch(e) {
+      console.error(e)
+      alert("Permission denied to access connected displays.")
+    }
+  }
+
+  const goFullscreenOn = async (screen: any) => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      }
+      await document.documentElement.requestFullscreen({ screen })
+    } catch(err) {
+      console.error("Error attempting to enable fullscreen:", err)
+      alert("Browser prevented fullscreen on the selected display.")
+    }
+  }
+
   return (
-    <div className="fixed inset-0 bg-black text-white overflow-hidden flex flex-col justify-center items-center font-inter">
+    <div className="flex h-screen overflow-hidden text-white font-inter group">
+      <Sidebar />
+      <div className="flex-1 relative bg-black flex flex-col justify-center items-center overflow-hidden cursor-none">
+        
+        {/* Invisible hover area to restore cursor in dev */}
+        <div className="absolute inset-0 hover:cursor-default z-[100] pointer-events-none"></div>
+
+      {/* Control overlay */}
+      <div className={`absolute top-4 right-4 z-[999] transition-all duration-500 flex flex-col items-end gap-2 pointer-events-auto ${uiVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+        <button 
+          onClick={requestScreens}
+          className="bg-black/50 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white/50 hover:text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2"
+        >
+          <Monitor className="w-4 h-4" /> Detect Displays
+        </button>
+
+        {screens.length > 0 && screens.map((screen, i) => (
+          <button 
+            key={screen.id || i}
+            onClick={() => goFullscreenOn(screen)}
+            className="bg-blue-600/20 backdrop-blur-md border border-blue-500/30 hover:bg-blue-600/40 text-blue-100 hover:text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 shadow-xl"
+          >
+            <Maximize className="w-3 h-3" /> Fullscreen on {screen.label || `Display ${i + 1}`} {screen.isInternal ? '(Internal)' : '(HDMI/Ext)'}
+          </button>
+        ))}
+      </div>
+
       {/* Background Layer */}
       <div className="absolute inset-0 z-0">
         {state.backgroundUrl ? (
@@ -101,6 +178,7 @@ export default function DisplayPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   )
 }

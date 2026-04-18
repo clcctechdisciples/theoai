@@ -5,13 +5,17 @@
 @tailwind utilities;
 
 :root {
-  --blue: #3b82f6;
-  --blue-light: #60a5fa;
-  --dark-bg: #000000;
-  --dark-card: #111318;
-  --dark-border: #1c1f26;
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.6);
+  --blue: #047361; /* Reused variable name for backwards compatibility, mapped to Teal/Forest */
+  --blue-light: #ceb382; /* Mapped to Gold */
+  --forest: #047361;
+  --forest-light: #069c84;
+  --gold: #b39b6d;
+  --gold-light: #ceb382;
+  --dark-bg: #011410; /* Ultra dark forest green */
+  --dark-card: #03211c; /* Slightly lighter forest green for cards */
+  --dark-border: #053b32; /* Border tint to maintain cohesion */
+  --text-primary: #f2ece1; /* Shift primary white towards cream */
+  --text-secondary: rgba(242, 236, 225, 0.6);
 }
 
 * {
@@ -30,7 +34,7 @@ html, body {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--dark); }
+::-webkit-scrollbar-track { background: var(--dark-bg); }
 ::-webkit-scrollbar-thumb { background: var(--forest); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--forest-light); }
 
@@ -42,9 +46,9 @@ html, body {
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Blue gradient text */
+/* Base gradient text */
 .accent-text {
-  background: linear-gradient(135deg, var(--blue-light), var(--blue));
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -52,12 +56,12 @@ html, body {
 
 /* Modern gradient bg */
 .accent-gradient {
-  background: linear-gradient(135deg, #1e3a8a, var(--blue));
+  background: linear-gradient(135deg, var(--forest), var(--forest-light));
 }
 
 /* Glow effects */
 .glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 20px rgba(206, 179, 130, 0.3); /* Gold glow instead of blue */
 }
 .glow-white {
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
