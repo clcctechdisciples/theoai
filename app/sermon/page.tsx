@@ -78,21 +78,28 @@ export default function SermonPage() {
 
         
         <main className="flex-1 overflow-y-auto p-8 relative flex flex-col">
-          <header className="mb-6">
-            <h1 className="text-3xl font-cinzel font-bold gold-text">Sermon Mode</h1>
-            <p className="text-cream/60 mt-1">Live transcription and AI-powered sermon synthesis.</p>
-          </header>
+          <div className="mb-6 flex justify-between items-center">
+            <h1 className="text-4xl font-cinzel font-black tracking-tighter text-cream uppercase">Sermon</h1>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => fetch('/api/control', { method: 'POST', body: JSON.stringify({ action: 'setMode', mode: 'idle' }) })}
+                className="bg-forest/20 border border-forest/30 hover:bg-forest/40 text-cream px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all glow-forest"
+              >
+                Go Idle
+              </button>
+            </div>
+          </div>
 
           <AudioEngine mode="sermon" onTranscript={handleTranscript} onRecordingComplete={setPendingAudioBlob} />
 
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
             {/* Live Transcript Log */}
             <div className="lg:col-span-2 glass-card rounded-2xl flex flex-col border border-forest/30 overflow-hidden">
-              <div className="p-4 border-b border-forest/30 bg-forest-dark/30 flex justify-between items-center">
-                <h2 className="font-cinzel text-lg font-bold text-cream flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-forest-light" /> Live Transcript
+              <div className="p-4 border-b border-forest/30 bg-forest-700/30 flex justify-between items-center">
+                <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-cream flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gold-light" /> Transcript
                 </h2>
-                {transcript && <div className="text-xs text-cream/50 uppercase tracking-widest">{transcript.split(' ').length} words</div>}
+                {transcript && <div className="text-[10px] font-black text-cream/40 uppercase tracking-widest bg-dark-950 px-3 py-1 rounded-full">{transcript.split(' ').length} words</div>}
               </div>
               <div className="p-6 overflow-y-auto flex-1 font-inter text-cream/80 leading-relaxed text-lg bg-dark/40">
                 {transcript || interimTranscript ? (
@@ -111,11 +118,11 @@ export default function SermonPage() {
 
             {/* Smart Summary Panel */}
             <div className="glass-card rounded-2xl flex flex-col border border-gold/20 overflow-hidden relative">
-              <div className="p-4 border-b border-gold/20 bg-dark-card flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full border border-gold flex items-center justify-center bg-gold/10">
-                  <img src="/logo.png" className="w-5 h-5" alt=""/>
+              <div className="p-4 border-b border-gold/20 bg-dark-950/50 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full border border-gold flex items-center justify-center bg-gold/10">
+                  <img src="/logo.png" className="w-3 h-3 grayscale brightness-200" alt=""/>
                 </div>
-                <h2 className="font-cinzel font-bold text-gold-light">Theo Summary Engine</h2>
+                <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-gold-light">Theo Summary Engine</h2>
               </div>
               
               <div className="flex-1 p-6 overflow-y-auto">

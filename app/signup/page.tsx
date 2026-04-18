@@ -40,16 +40,16 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden font-inter">
+    <div className="min-h-screen flex items-center justify-center bg-dark-950 relative overflow-hidden font-inter">
       {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40 bg-[radial-gradient(circle_at_center,_#047361_0%,_transparent_70%)]" />
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 bg-[radial-gradient(circle_at_center,_#2d5a27_0%,_transparent_70%)]" />
       <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-forest/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-forest/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gold/10 rounded-full blur-[120px]" />
 
       <div className="glass-card w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative z-10 border border-white/10">
         <div className="flex flex-col items-center mb-10">
-          <h1 className="font-cinzel text-5xl font-black text-white tracking-tighter text-center">JOIN THEO</h1>
-          <div className="h-1 w-12 bg-cream mt-2 rounded-full shadow-[0_0_15px_rgba(242,236,225,0.3)]"></div>
+          <h1 className="font-cinzel text-5xl font-black text-cream tracking-tighter text-center">JOIN THEO</h1>
+          <div className="h-1 w-12 bg-gold mt-2 rounded-full shadow-[0_0_15px_rgba(201,168,76,0.5)]"></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

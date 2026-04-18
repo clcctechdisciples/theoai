@@ -12,12 +12,12 @@ export default async function Dashboard() {
       <Sidebar />
       <main className="flex-1 overflow-y-auto p-10">
         <header className="mb-12">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full bg-forest animate-pulse"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-forest-light/80">System Online</span>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-2 h-2 rounded-full bg-forest animate-pulse shadow-[0_0_10px_var(--forest)]"></div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-forest">System Online</span>
           </div>
-          <h1 className="text-4xl font-cinzel font-black text-white tracking-tight">Welcome, {session?.user?.name || 'Admin'}</h1>
-          <p className="text-white/40 mt-3 text-sm max-w-md">Theo AI is engaged and ready to assist with today's worship experience.</p>
+          <h1 className="text-6xl font-cinzel font-black text-cream tracking-tighter">Welcome, {session?.user?.name || 'Admin'}</h1>
+          <p className="text-cream/40 mt-4 text-sm max-w-lg leading-relaxed font-medium">Theo AI is engaged and ready to assist with today's church experience. Select an engine to begin.</p>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -52,13 +52,13 @@ export default async function Dashboard() {
           </Link>
         </div>
 
-        <div className="mt-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-cinzel font-bold text-white/80">Recent Activity</h2>
+        <div className="mt-20">
+          <div className="flex items-center justify-between mb-10">
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cream/30">System Status</h2>
             <div className="h-px flex-1 mx-8 bg-white/5"></div>
           </div>
-          <div className="glass-card rounded-3xl p-12 text-center text-white/20 font-bold tracking-tight">
-            SYSTEM LOGS EMPTY
+          <div className="glass-card rounded-[2.5rem] p-20 text-center text-cream/10 font-black uppercase tracking-[0.4em] text-sm border border-white/5">
+            Logs Clear
           </div>
         </div>
       </main>
