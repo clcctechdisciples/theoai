@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { Sidebar } from '@/components/Sidebar'
-import { Music, MessageSquare } from 'lucide-react'
+import { Music, MessageSquare, Mic, History } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function Dashboard() {
