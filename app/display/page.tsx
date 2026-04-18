@@ -1,3 +1,4 @@
+'use client'
 import { useEffect, useState } from 'react'
 import { Monitor, Maximize } from 'lucide-react'
 import { Sidebar } from '@/components/Sidebar'
@@ -70,7 +71,7 @@ export default function DisplayPage() {
       if (document.fullscreenElement) {
         await document.exitFullscreen()
       }
-      await document.documentElement.requestFullscreen({ screen })
+      await (document.documentElement as any).requestFullscreen({ screen } as any)
     } catch(err) {
       console.error("Error attempting to enable fullscreen:", err)
       alert("Browser prevented fullscreen on the selected display.")

@@ -154,7 +154,7 @@ export default function AudioEnginePage() {
                 >
                   <option value="default">Default System Microphone</option>
                   {devices.map(d => (
-                    <option key={d.deviceId} value={d.deviceId}>{d.label || \`Microphone \${d.deviceId.substring(0,5)}\`}</option>
+                    <option key={d.deviceId} value={d.deviceId}>{d.label || `Microphone ${d.deviceId.substring(0,5)}`}</option>
                   ))}
                 </select>
               </div>
@@ -162,9 +162,9 @@ export default function AudioEnginePage() {
               <div className="pt-6">
                 <button 
                   onClick={isTesting ? stopTest : startTest}
-                  className={\`px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg \${
+                  className={`px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg ${
                     isTesting ? 'bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30' : 'bg-cream text-forest-dark hover:bg-white'
-                  }\`}
+                  }`}
                 >
                   <Mic className="w-5 h-5" />
                   {isTesting ? 'Stop Visualizer' : 'Test Audio Feed'}
