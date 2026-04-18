@@ -188,7 +188,7 @@ export default function WorshipPage() {
                   <button
                     onClick={() => { const n = Math.min(verses.length - 1, currentVerseIndex + 1); projectVerse(n, verses[n]) }}
                     disabled={currentVerseIndex === verses.length - 1 || verses.length === 0}
-                    className="flex-[2] py-2 bg-cream hover:bg-white text-forest-dark font-black text-xs rounded-lg flex justify-center items-center gap-1 disabled:opacity-50 disabled:pointer-events-none"
+                    className="flex-[2] py-2 bg-forest/30 border border-gold/40 text-cream hover:bg-forest/50 hover:border-gold/70 font-black text-xs rounded-lg flex justify-center items-center gap-1 disabled:opacity-50 disabled:pointer-events-none transition-all"
                   >
                     Next <ChevronRight className="w-4 h-4" />
                   </button>

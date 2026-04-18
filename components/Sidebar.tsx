@@ -68,6 +68,7 @@ export function Sidebar() {
     try {
       await fetch('/api/control', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'setBackground', url: val })
       })
       setBackgroundUrl(val)
