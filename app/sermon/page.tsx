@@ -1,10 +1,10 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
-
 import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
-import { FileText, Download, CheckCircle2, FileDown } from 'lucide-react'
+import { FileText, Download, CheckCircle2, FileDown, BookOpen } from 'lucide-react'
+import { detectScripture } from '@/lib/scriptureDetector'
 
 export default function SermonPage() {
   const [globalMode, setGlobalMode] = useState('idle')
@@ -13,8 +13,11 @@ export default function SermonPage() {
   const [generating, setGenerating] = useState(false)
   const [summary, setSummary] = useState<string | null>(null)
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null)
-  
+  const [detectedScripture, setDetectedScripture] = useState<string | null>(null)
+  const [scriptureToast, setScriptureToast] = useState<string | null>(null)
+
   const endRef = useRef<HTMLDivElement>(null)
+  const lastPushedRef = useRef<string>('')
 
   useEffect(() => {
     fetch('/api/control').then(r => r.json()).then(d => setGlobalMode(d.mode))
@@ -24,10 +27,35 @@ export default function SermonPage() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [transcript, interimTranscript])
 
-  const handleTranscript = (text: string, isFinal?: boolean) => {
+  const handleTranscript = async (text: string, isFinal?: boolean) => {
     if (isFinal) {
-      setTranscript(prev => prev + ' ' + text + '.')
+      const newTranscript = transcript + ' ' + text + '.'
+      setTranscript(newTranscript)
       setInterimTranscript('')
+
+      // Scripture auto-detection
+      const ref = detectScripture(text)
+      if (ref && ref !== lastPushedRef.current) {
+        lastPushedRef.current = ref
+        setDetectedScripture(ref)
+        setScriptureToast(ref)
+        setTimeout(() => setScriptureToast(null), 5000)
+
+        // Fetch verse and push to projector
+        try {
+          const res = await fetch(`/api/bible?ref=${encodeURIComponent(ref)}`)
+          const data = await res.json()
+          if (data.reference && data.text) {
+            await fetch('/api/control', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'setScripture', scripture: { reference: data.reference, text: data.text } })
+            })
+          }
+        } catch (e) {
+          console.error('Scripture fetch error:', e)
+        }
+      }
     } else {
       setInterimTranscript(text)
     }
@@ -75,8 +103,6 @@ export default function SermonPage() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-
-        
         <main className="flex-1 overflow-y-auto p-8 relative flex flex-col">
           <div className="mb-6 flex justify-between items-center">
             <h1 className="text-4xl font-cinzel font-black tracking-tighter text-cream uppercase">Sermon</h1>
@@ -90,6 +116,17 @@ export default function SermonPage() {
             </div>
           </div>
 
+          {/* Scripture Detected Toast */}
+          {scriptureToast && (
+            <div className="mb-4 flex items-center gap-3 bg-gold/10 border border-gold/40 rounded-2xl px-5 py-4 animate-fade-in">
+              <BookOpen className="w-5 h-5 text-gold shrink-0" />
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gold">Scripture Detected & Projected</p>
+                <p className="text-cream font-bold mt-1">{scriptureToast}</p>
+              </div>
+            </div>
+          )}
+
           <AudioEngine mode="sermon" onTranscript={handleTranscript} onRecordingComplete={setPendingAudioBlob} />
 
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
@@ -99,7 +136,14 @@ export default function SermonPage() {
                 <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-cream flex items-center gap-2">
                   <FileText className="w-4 h-4 text-gold-light" /> Transcript
                 </h2>
-                {transcript && <div className="text-[10px] font-black text-cream/40 uppercase tracking-widest bg-dark-950 px-3 py-1 rounded-full">{transcript.split(' ').length} words</div>}
+                <div className="flex items-center gap-3">
+                  {detectedScripture && (
+                    <span className="text-[10px] font-black text-gold bg-gold/10 px-2 py-1 rounded-full border border-gold/30">
+                      📖 {detectedScripture}
+                    </span>
+                  )}
+                  {transcript && <div className="text-[10px] font-black text-cream/40 uppercase tracking-widest bg-dark-950 px-3 py-1 rounded-full">{transcript.split(' ').length} words</div>}
+                </div>
               </div>
               <div className="p-6 overflow-y-auto flex-1 font-inter text-cream/80 leading-relaxed text-lg bg-dark/40">
                 {transcript || interimTranscript ? (

@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { Sidebar } from '@/components/Sidebar'
-import { Music, MessageSquare, Mic, History } from 'lucide-react'
+import { Music, MessageSquare, History } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function Dashboard() {
@@ -21,33 +21,33 @@ export default async function Dashboard() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Link href="/sermon" className="glass-card p-6 rounded-2xl border border-cream/20 hover:border-cream/50 transition-all group hover:-translate-y-1 block bg-forest-dark/30 hover:bg-forest/50">
-            <div className="w-12 h-12 rounded-xl bg-cream flex items-center justify-center mb-4 transition-all">
-              <MessageSquare className="w-6 h-6 text-forest-dark" />
+          <Link href="/sermon" className="glass-card p-6 rounded-2xl border border-cream/20 hover:border-gold/50 transition-all group hover:-translate-y-1 block bg-forest-dark/30 hover:bg-forest/30">
+            <div className="w-12 h-12 rounded-xl bg-forest border border-gold/30 flex items-center justify-center mb-4 transition-all group-hover:bg-gold/20 group-hover:border-gold glow-forest">
+              <MessageSquare className="w-6 h-6 text-gold" />
             </div>
             <h2 className="font-cinzel text-xl font-bold text-cream mb-2">Sermon Engine</h2>
-            <p className="text-sm text-cream/70 leading-relaxed group-hover:text-cream transition-colors">
-              Capture preaching in real-time. Automatically extract key points and generate theological summaries.
+            <p className="text-sm text-cream/60 leading-relaxed group-hover:text-cream transition-colors">
+              Capture preaching in real-time. AI auto-detects scriptures, generates notes, and drives the projector.
             </p>
           </Link>
 
-          <Link href="/worship" className="glass-card p-6 rounded-2xl border border-cream/20 hover:border-cream/50 transition-all group hover:-translate-y-1 block bg-forest-dark/30 hover:bg-forest/50">
-            <div className="w-12 h-12 rounded-xl bg-cream flex items-center justify-center mb-4 transition-all">
-              <Mic className="w-6 h-6 text-forest-dark" />
+          <Link href="/worship" className="glass-card p-6 rounded-2xl border border-cream/20 hover:border-gold/50 transition-all group hover:-translate-y-1 block bg-forest-dark/30 hover:bg-forest/30">
+            <div className="w-12 h-12 rounded-xl bg-forest border border-gold/30 flex items-center justify-center mb-4 transition-all group-hover:bg-gold/20 group-hover:border-gold glow-forest">
+              <Music className="w-6 h-6 text-gold" />
             </div>
             <h2 className="font-cinzel text-xl font-bold text-cream mb-2">Worship Engine</h2>
-            <p className="text-sm text-cream/70 leading-relaxed group-hover:text-cream transition-colors">
-              Send live lyrics to the projector and automate scripture display explicitly mapped to the live band.
+            <p className="text-sm text-cream/60 leading-relaxed group-hover:text-cream transition-colors">
+              Send live lyrics to the projector. Click any verse block to instantly project it to the display screen.
             </p>
           </Link>
 
-          <Link href="/audio" className="glass-card p-6 rounded-2xl border border-cream/20 hover:border-cream/50 transition-all group hover:-translate-y-1 block bg-forest-dark/30 hover:bg-forest/50">
-            <div className="w-12 h-12 rounded-xl bg-cream flex items-center justify-center mb-4 transition-all">
-              <History className="w-6 h-6 text-forest-dark" />
+          <Link href="/audio" className="glass-card p-6 rounded-2xl border border-cream/20 hover:border-gold/50 transition-all group hover:-translate-y-1 block bg-forest-dark/30 hover:bg-forest/30">
+            <div className="w-12 h-12 rounded-xl bg-forest border border-gold/30 flex items-center justify-center mb-4 transition-all group-hover:bg-gold/20 group-hover:border-gold glow-forest">
+              <History className="w-6 h-6 text-gold" />
             </div>
             <h2 className="font-cinzel text-xl font-bold text-cream mb-2">Audio Archive</h2>
-            <p className="text-sm text-cream/70 leading-relaxed group-hover:text-cream transition-colors">
-              Manage saved audio recordings, download full MP4 files directly from the local OS storage.
+            <p className="text-sm text-cream/60 leading-relaxed group-hover:text-cream transition-colors">
+              Manage service recordings. Includes live projector preview and connected display (HDMI/VGA) switching.
             </p>
           </Link>
         </div>

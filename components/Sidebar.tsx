@@ -121,10 +121,10 @@ export function Sidebar() {
   }
 
   return (
-    <div className="w-64 h-full bg-dark-950 border-r border-dark-800 flex flex-col pt-8">
+    <div className="w-64 h-full bg-dark-950 border-r border-forest-700/30 flex flex-col pt-8">
       <div className="px-8 mb-10 group cursor-default">
-        <h2 className="font-cinzel text-2xl font-black tracking-tighter text-white group-hover:text-cream transition-colors">THEO AI</h2>
-        <div className="h-0.5 w-8 bg-cream/70 mt-1 transition-all group-hover:w-16"></div>
+        <h2 className="font-cinzel text-2xl font-black tracking-tighter text-cream group-hover:text-gold transition-colors">THEO AI</h2>
+        <div className="h-0.5 w-8 bg-gold/70 mt-1 transition-all group-hover:w-16"></div>
       </div>
 
       <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
@@ -222,10 +222,10 @@ export function Sidebar() {
         </div>
       </nav>
 
-      <div className="p-6 border-t border-dark-800 shrink-0">
+      <div className="p-6 border-t border-forest-700/30 shrink-0">
         <button
           onClick={() => signOut()}
-          className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-white/30 hover:bg-red-500/5 hover:text-red-400 transition-all duration-300 group"
+          className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-cream/30 hover:bg-red-500/5 hover:text-red-400 transition-all duration-300 group"
         >
           <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-semibold text-sm tracking-tight">Sign Out</span>

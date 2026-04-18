@@ -133,7 +133,7 @@ export default function AudioEnginePage() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden bg-dark-bg p-8 items-center">
+      <div className="flex-1 flex flex-col overflow-y-auto bg-dark-bg p-8 items-center">
         <header className="mb-8 w-full max-w-4xl">
           <h1 className="text-3xl font-cinzel font-bold text-cream flex items-center gap-3">
             <Activity className="w-8 h-8 text-gold" /> Global Audio Engine
@@ -163,7 +163,9 @@ export default function AudioEnginePage() {
                 <button 
                   onClick={isTesting ? stopTest : startTest}
                   className={`px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg ${
-                    isTesting ? 'bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30' : 'bg-cream text-forest-dark hover:bg-white'
+                    isTesting 
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30' 
+                      : 'bg-forest/30 border border-gold/40 text-cream hover:bg-forest/50 hover:border-gold/70'
                   }`}
                 >
                   <Mic className="w-5 h-5" />
