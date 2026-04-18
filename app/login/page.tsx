@@ -32,17 +32,17 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden font-inter">
       {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40 bg-[radial-gradient(circle_at_center,_#1e3a8a_0%,_transparent_70%)]" />
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px]" />
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40 bg-[radial-gradient(circle_at_center,_#047361_0%,_transparent_70%)]" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-forest/5 rounded-full blur-[120px]" />
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-forest/10 rounded-full blur-[120px]" />
 
       <div className="glass-card w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative z-10 border border-white/10">
         <div className="flex flex-col items-center mb-10">
-          <div className="w-24 h-24 rounded-3xl bg-blue-600/10 flex items-center justify-center mb-6 border border-blue-500/20 shadow-2xl shadow-blue-500/10">
+          <div className="w-24 h-24 rounded-3xl bg-forest/10 flex items-center justify-center mb-6 border border-forest/20 shadow-2xl shadow-forest/10">
             <Image src="/logo.png" alt="Logo" width={64} height={64} className="object-contain" />
           </div>
           <h1 className="font-cinzel text-5xl font-black text-white tracking-tighter">THEO AI</h1>
-          <div className="h-1 w-12 bg-blue-500 mt-2 rounded-full"></div>
+          <div className="h-1 w-12 bg-cream mt-2 rounded-full"></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -58,7 +58,7 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-forest/50 focus:bg-white/10 transition-all font-medium"
               required
             />
           </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-forest/50 focus:bg-white/10 transition-all font-medium"
               required
             />
           </div>
@@ -77,14 +77,14 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl hover:bg-blue-500 active:scale-[0.98] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 mt-4"
+            className="w-full bg-forest text-cream font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl hover:bg-forest-light active:scale-[0.98] transition-all shadow-xl shadow-forest/20 flex items-center justify-center gap-2 mt-4"
           >
             {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Initialize System'}
           </button>
         </form>
 
         <p className="text-center text-[10px] font-bold text-white/20 uppercase tracking-widest mt-10">
-          Authorized Personnel Only • <a href="/signup" className="text-blue-400 hover:text-blue-300 transition-colors">Create Account</a>
+          Authorized Personnel Only • <a href="/signup" className="text-forest-light hover:text-cream transition-colors">Create Account</a>
         </p>
       </div>
     </div>

@@ -13,8 +13,8 @@ export default async function Dashboard() {
       <main className="flex-1 overflow-y-auto p-10">
         <header className="mb-12">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400/80">System Online</span>
+            <div className="w-2 h-2 rounded-full bg-forest animate-pulse"></div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-forest-light/80">System Online</span>
           </div>
           <h1 className="text-4xl font-cinzel font-black text-white tracking-tight">Welcome, {session?.user?.name || 'Admin'}</h1>
           <p className="text-white/40 mt-3 text-sm max-w-md">Theo AI is engaged and ready to assist with today's worship experience.</p>
