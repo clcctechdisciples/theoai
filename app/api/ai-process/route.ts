@@ -9,22 +9,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ type: 'none', error: 'API key missing' });
     }
 
-    const prompt = `You are an AI church media assistant. Analyze the following transcript from a live church service ${mode === 'sermon' ? '(during a sermon)' : '(during worship)'}.
+    const prompt = `You are an elite AI church media assistant specializing in real-time lyric and scripture detection. 
+    
+    ANALYSIS MODE: ${mode === 'sermon' ? 'SERMON' : 'WORSHIP'}
     
     TASK:
-    1. If the speaker is quoting a Bible verse (e.g., "John 3:16" or "The Lord is my shepherd"), identify it.
-    2. If the speaker is singing or reciting worship lyrics, format them into 2-4 clean lines.
-    3. If it's just general speaking/filler, return type "none".
+    1. SCRIPTURE: Identify ANY quoted Bible verses. Even if only part of a verse is spoken (e.g., "The Lord is my shepherd"), find the full verse and reference.
+    2. LYRICS: If worship music is detected, extract the lyrics. 
+       - Clean up any repetition or filler words (e.g., "Oh", "Yeah", "Praise the Lord").
+       - Format into exactly 2-4 lines suitable for a projector screen.
+       - Use proper capitalization and punctuation.
+    3. REJECTION: If it's general speaking, announcements, or noise, return type "none".
 
-    Transcript: "${transcript}"
+    TRANSCRIPT: "${transcript}"
 
-    Respond ONLY with a JSON object:
+    Respond ONLY with a valid JSON object:
     {
       "type": "scripture" | "lyrics" | "none",
       "content": {
-        "reference": "Reference string (e.g. Genesis 1:1) if scripture",
-        "text": "Full verse text if scripture",
-        "lines": ["Array of formatted lines if lyrics"]
+        "reference": "Reference string (e.g. Romans 8:28) [Empty if not scripture]",
+        "text": "Full authoritative verse text [Empty if not scripture]",
+        "lines": ["Clean line 1", "Clean line 2"] // [Empty if not lyrics]
       }
     }`;
 

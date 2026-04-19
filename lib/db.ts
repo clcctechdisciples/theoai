@@ -30,24 +30,29 @@ export function addUser(user: any) {
 
 export function getData(userId: string) {
   initDb()
-  const raw = fs.readFileSync(dataFile, 'utf8')
-  const allData = JSON.parse(raw)
-  if (!allData[userId]) {
-    allData[userId] = { songs: [], backgrounds: [], audio: [] }
-    fs.writeFileSync(dataFile, JSON.stringify(allData, null, 2))
+  try {
+    const raw = fs.readFileSync(dataFile, 'utf8')
+    const allData = JSON.parse(raw)
+    if (!allData[userId]) {
+      allData[userId] = { songs: [], backgrounds: [], audio: [] }
+      fs.writeFileSync(dataFile, JSON.stringify(allData, null, 2))
+    }
+    return allData[userId]
+  } catch (e) {
+    return { songs: [], backgrounds: [], audio: [] }
   }
-  return allData[userId]
 }
 
 export function saveData(userId: string, key: 'songs' | 'backgrounds' | 'audio', value: any) {
+  initDb()
   const raw = fs.readFileSync(dataFile, 'utf8')
   const allData = JSON.parse(raw)
   if (!allData[userId]) allData[userId] = { songs: [], backgrounds: [], audio: [] }
   
   if (key === 'songs') {
     const existingIdx = allData[userId].songs.findIndex((s: any) => s.title === value.title)
-    if (existingIdx > -1) allData[userId].songs[existingIdx] = { ...allData[userId].songs[existingIdx], ...value }
-    else allData[userId].songs.push({ ...value, id: Date.now().toString() })
+    if (existingIdx > -1) allData[userId].songs[existingIdx] = { ...allData[userId].songs[existingIdx], ...value, updatedAt: new Date().toISOString() }
+    else allData[userId].songs.push({ ...value, id: Date.now().toString(), createdAt: new Date().toISOString() })
   } else {
     allData[userId][key] = value
   }

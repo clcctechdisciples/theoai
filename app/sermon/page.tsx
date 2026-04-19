@@ -279,13 +279,13 @@ export default function SermonPage() {
                     <select 
                       value={bibleVersion}
                       onChange={e => setBibleVersion(e.target.value)}
-                      className="flex-1 bg-black/40 border border-forest/30 rounded-xl px-2 text-[10px] font-black uppercase text-gold focus:outline-none focus:border-gold/50"
+                      className="flex-1 bg-black/60 border border-forest/40 rounded-xl px-2 text-[10px] font-black uppercase text-gold cursor-pointer focus:outline-none focus:border-gold/50 appearance-none text-center hover:bg-black/80 transition-all"
                     >
-                      <option value="kjv">KJV</option>
-                      <option value="niv">NIV</option>
-                      <option value="asv">ASV</option>
-                      <option value="web">WEB</option>
-                      <option value="bbe">BBE</option>
+                      <option value="kjv" className="bg-forest-950 text-gold">KJV (King James)</option>
+                      <option value="asv" className="bg-forest-950 text-gold">ASV (American Standard)</option>
+                      <option value="web" className="bg-forest-950 text-gold">WEB (World English)</option>
+                      <option value="bbe" className="bg-forest-950 text-gold">BBE (Basic English)</option>
+                      <option value="oeb-us" className="bg-forest-950 text-gold">OEB (Open English)</option>
                     </select>
                     <button onClick={searchVerse} className="bg-forest px-6 py-3 rounded-xl text-cream text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Project</button>
                   </div>
