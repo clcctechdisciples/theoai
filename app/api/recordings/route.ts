@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
