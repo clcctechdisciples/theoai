@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
                     className="w-full bg-white/5 border border-cream/10 rounded-2xl px-5 py-4 text-cream placeholder:text-cream/20 focus:outline-none focus:border-forest/60 transition-all font-medium pr-12"
                     required
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-cream/30 hover:text-gold transition-colors">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-forest/60 hover:text-forest transition-colors">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
