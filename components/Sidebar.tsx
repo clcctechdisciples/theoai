@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Music, MessageSquare, Settings, LogOut, UploadCloud, Monitor, Maximize, LayoutDashboard, History, MonitorPlay, ChevronDown } from 'lucide-react'
-import { signOut } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import { useState, useRef, useEffect } from 'react'
 
 const navItems = [
@@ -25,9 +25,13 @@ export function Sidebar() {
   const [showProjection, setShowProjection] = useState(true)
   const [activeScreenId, setActiveScreenId] = useState<string | null>(null)
 
+  const { data: session } = useSession()
+
   useEffect(() => {
-    const savedBgs = localStorage.getItem('theoai_backgrounds')
-    if (savedBgs) { try { setBackgrounds(JSON.parse(savedBgs)) } catch (e) {} }
+    fetch('/api/backgrounds').then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setBackgrounds(d)
+    }).catch(() => {})
+    
     const defBg = localStorage.getItem('theoai_default_bg')
     if (defBg) setDefaultBgId(defBg)
 
@@ -74,6 +78,17 @@ export function Sidebar() {
     setLoading(false)
   }
 
+  const saveBgs = async (newBgs: any[]) => {
+    setBackgrounds(newBgs)
+    try {
+      await fetch('/api/backgrounds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBgs)
+      })
+    } catch (e) {}
+  }
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -83,20 +98,18 @@ export function Sidebar() {
         const b64 = ev.target?.result as string
         const newBg = { id: Date.now().toString(), url: b64 }
         const updated = [...backgrounds, newBg]
-        setBackgrounds(updated)
-        localStorage.setItem('theoai_backgrounds', JSON.stringify(updated))
+        await saveBgs(updated)
         await handleSetBackground(b64)
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const removeBackground = (id: string, e: React.MouseEvent) => {
+  const removeBackground = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     const bg = backgrounds.find(b => b.id === id)
     const updated = backgrounds.filter(b => b.id !== id)
-    setBackgrounds(updated)
-    localStorage.setItem('theoai_backgrounds', JSON.stringify(updated))
+    await saveBgs(updated)
     if (defaultBgId === id) { setDefaultBgId(null); localStorage.removeItem('theoai_default_bg') }
     if (bg && backgroundUrl === bg.url) handleSetBackground('')
   }
@@ -134,10 +147,13 @@ export function Sidebar() {
 
   return (
     <div className="w-64 h-full bg-dark-950 border-r border-forest-700/30 flex flex-col pt-8 shrink-0">
-      {/* Logo */}
+      {/* Logo & User */}
       <div className="px-8 mb-8 group cursor-default">
         <h2 className="font-cinzel text-2xl font-black tracking-tighter text-cream group-hover:text-gold transition-colors">THEO AI</h2>
         <div className="h-0.5 w-8 bg-gold/70 mt-1 transition-all group-hover:w-16" />
+        {session?.user && (
+          <p className="text-[10px] text-cream/30 uppercase font-black tracking-widest mt-2">Member: {session.user.name}</p>
+        )}
       </div>
 
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto pb-4">

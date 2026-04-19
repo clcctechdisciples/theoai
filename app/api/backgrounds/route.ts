@@ -7,23 +7,15 @@ export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   
-  try {
-    const data = getData((session.user as any).id)
-    return NextResponse.json(data.songs)
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+  const data = getData((session.user as any).id)
+  return NextResponse.json(data.backgrounds)
 }
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  try {
-    const song = await req.json()
-    saveData((session.user as any).id, 'songs', song)
-    return NextResponse.json({ success: true })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+  const backgrounds = await req.json()
+  saveData((session.user as any).id, 'backgrounds', backgrounds)
+  return NextResponse.json({ success: true })
 }

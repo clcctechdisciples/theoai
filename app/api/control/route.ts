@@ -1,35 +1,51 @@
-let globalState = {
-  mode: 'idle', // idle | worship | sermon
-  scripture: null as { reference: string, text: string } | null,
-  lyricLines: [] as string[],
-  lyricSection: '', // Verse, Chorus, etc.
-  backgroundUrl: null as string | null,
-}
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+let projectorStates: Record<string, any> = {}
+
+const getInitialState = () => ({
+  mode: 'idle',
+  scripture: null,
+  lyricLines: [],
+  lyricSection: '',
+  backgroundUrl: null,
+})
 
 export async function GET() {
-  return Response.json(globalState)
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const userId = (session.user as any).id
+  
+  if (!projectorStates[userId]) projectorStates[userId] = getInitialState()
+  return NextResponse.json(projectorStates[userId])
 }
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const userId = (session.user as any).id
+  
+  if (!projectorStates[userId]) projectorStates[userId] = getInitialState()
+  const state = projectorStates[userId]
   const data = await req.json()
   
   if (data.action === 'setMode') {
-    globalState.mode = data.mode
-    // Clear display stuff when switching to idle
+    state.mode = data.mode
     if (data.mode === 'idle') {
-      globalState.lyricLines = []
-      globalState.scripture = null
+      state.lyricLines = []
+      state.scripture = null
     }
   } else if (data.action === 'setScripture') {
-    globalState.scripture = data.scripture
-    globalState.mode = 'scripture'
+    state.scripture = data.scripture
+    state.mode = 'scripture'
   } else if (data.action === 'setLyrics') {
-    globalState.lyricLines = data.lines
-    globalState.lyricSection = data.section || ''
-    globalState.mode = 'worship'
+    state.lyricLines = data.lines
+    state.lyricSection = data.section || ''
+    state.mode = 'worship'
   } else if (data.action === 'setBackground') {
-    globalState.backgroundUrl = data.url
+    state.backgroundUrl = data.url
   }
 
-  return Response.json({ success: true, state: globalState })
+  return NextResponse.json({ success: true, state })
 }

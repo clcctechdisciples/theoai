@@ -1,6 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function POST(req: Request) {
   const exportsDir = path.join(process.cwd(), 'exports')
@@ -16,9 +18,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing audio or session ID' }, { status: 400 })
     }
 
+    const session = await getServerSession(authOptions)
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const userId = (session.user as any).id
+
     const dateStr = new Date().toISOString().split('T')[0]
+    const userDir = path.join(exportsDir, userId)
+    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true })
+    
     const filename = `${dateStr}-${mode}-${sessionId}.webm`
-    const filePath = path.join(exportsDir, filename)
+    const filePath = path.join(userDir, filename)
 
     // Convert Blob to Buffer and append to file
     const arrayBuffer = await audioChunk.arrayBuffer()

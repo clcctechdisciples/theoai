@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
-import { Edit2, Save, FolderOpen, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Edit2, Save, FolderOpen, ChevronLeft, ChevronRight, FileUp } from 'lucide-react'
 
 export default function WorshipPage() {
   const [globalState, setGlobalState] = useState({ mode: 'idle', lyricLines: [] as string[], lyricSection: '' })
@@ -13,6 +13,7 @@ export default function WorshipPage() {
   const [songTitle, setSongTitle] = useState('')
   const [library, setLibrary] = useState<any[]>([])
   const [showLibrary, setShowLibrary] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   useEffect(() => {
     fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : [])).catch(() => {})
@@ -84,6 +85,31 @@ export default function WorshipPage() {
     }
   }
 
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    setBulkLoading(true)
+    try {
+      const text = await file.text()
+      const res = await fetch('/api/songs/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: text })
+      })
+      const data = await res.json()
+      if (data.success) {
+        alert(`Successfully added ${data.count} songs to your library!`)
+        fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : []))
+      } else {
+        alert('Failed to process file: ' + data.error)
+      }
+    } catch (e) {
+      alert('Error reading file.')
+    }
+    setBulkLoading(false)
+  }
+
   const saveToLibrary = async () => {
     if (!songTitle.trim()) return alert('Please enter a Song Title to save.')
     try {
@@ -117,6 +143,18 @@ export default function WorshipPage() {
               >
                 <FolderOpen className="w-4 h-4" /> Library
               </button>
+
+              <div className="relative">
+                <input type="file" accept=".txt,.md,.doc,.docx,.pdf" onChange={handleBulkUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                <button className="flex items-center gap-2 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest bg-forest/40 border border-forest/30 text-cream hover:bg-forest transition-all">
+                  {bulkLoading ? (
+                    <div className="w-4 h-4 border-2 border-cream/30 border-t-cream rounded-full animate-spin" />
+                  ) : (
+                    <FileUp className="w-4 h-4" />
+                  )}
+                  {bulkLoading ? 'Processing...' : 'Bulk Upload'}
+                </button>
+              </div>
             </div>
           </div>
 
