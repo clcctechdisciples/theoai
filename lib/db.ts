@@ -1,9 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 
-const dbPath = path.join(process.cwd(), 'data')
+const isVercel = process.env.VERCEL === '1'
+const dbPath = isVercel ? '/tmp/data' : path.join(process.cwd(), 'data')
 const usersFile = path.join(dbPath, 'users.json')
-const dataFile = path.join(dbPath, 'app_data.json') // Combined file for songs, backgrounds, audio
+const dataFile = path.join(dbPath, 'app_data.json')
 
 export function initDb() {
   try {
@@ -11,7 +12,7 @@ export function initDb() {
     if (!fs.existsSync(usersFile)) fs.writeFileSync(usersFile, JSON.stringify([]))
     if (!fs.existsSync(dataFile)) fs.writeFileSync(dataFile, JSON.stringify({}))
   } catch (err) {
-    console.warn('DB initialization failed:', err)
+    console.error('DB initialization failed:', err)
   }
 }
 
@@ -52,4 +53,15 @@ export function saveData(userId: string, key: 'songs' | 'backgrounds' | 'audio',
   }
   
   fs.writeFileSync(dataFile, JSON.stringify(allData, null, 2))
+}
+
+export function resetPassword(username: string, newHashedPassword: string) {
+  const users = getUsers()
+  const idx = users.findIndex((u: any) => u.username === username)
+  if (idx > -1) {
+    users[idx].password = newHashedPassword
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2))
+    return true
+  }
+  return false
 }

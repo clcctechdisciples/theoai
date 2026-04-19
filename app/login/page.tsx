@@ -3,11 +3,12 @@ import { signIn } from 'next-auth/react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogIn, UserPlus } from 'lucide-react'
+import { LogIn, UserPlus, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -67,14 +68,23 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <label className="block text-cream/50 text-[10px] font-black uppercase tracking-[0.2em] ml-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full bg-white/5 border border-cream/10 rounded-2xl px-5 py-4 text-cream placeholder:text-cream/20 focus:outline-none focus:border-forest/60 transition-all font-medium"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full bg-white/5 border border-cream/10 rounded-2xl px-5 py-4 text-cream placeholder:text-cream/20 focus:outline-none focus:border-forest/60 transition-all font-medium pr-12"
+                  required
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-cream/30 hover:text-gold transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             <button
@@ -87,6 +97,12 @@ export default function LoginPage() {
                 : <><LogIn className="w-4 h-4" /> Sign In</>
               }
             </button>
+            <div className="text-center">
+              <Link href="/login/forgot-password" data-testid="forgot-password"
+                className="text-[10px] font-black uppercase tracking-widest text-cream/30 hover:text-gold transition-colors">
+                Forgot Password?
+              </Link>
+            </div>
           </form>
 
           {/* Divider */}

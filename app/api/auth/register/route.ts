@@ -4,9 +4,9 @@ import bcrypt from 'bcryptjs'
 
 export async function POST(req: Request) {
   try {
-    const { username, password } = await req.json()
+    const { username, password, recoveryQuestion, recoveryAnswer } = await req.json()
     
-    if (!username || !password) {
+    if (!username || !password || !recoveryQuestion || !recoveryAnswer) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
@@ -16,7 +16,13 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-    addUser({ id: Date.now().toString(), username, password: hashedPassword })
+    addUser({ 
+      id: Date.now().toString(), 
+      username, 
+      password: hashedPassword,
+      recoveryQuestion,
+      recoveryAnswer: await bcrypt.hash(recoveryAnswer.toLowerCase().trim(), 10) // Hash the answer too
+    })
     
     return NextResponse.json({ success: true })
   } catch (err: any) {
