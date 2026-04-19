@@ -7,8 +7,8 @@ import { useState, useRef, useEffect } from 'react'
 
 const navItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { label: 'Sermon Engine', href: '/sermon', icon: MessageSquare },
   { label: 'Worship Engine', href: '/worship', icon: Music },
+  { label: 'Sermon Engine', href: '/sermon', icon: MessageSquare },
   { label: 'Audio Engine', href: '/audio-engine', icon: Settings },
   { label: 'Audio Archive', href: '/audio', icon: History },
 ]
@@ -159,7 +159,43 @@ export function Sidebar() {
           )
         })}
         
-        {/* ─── Live Projection (directly below Audio Archive) ─── */}
+        {/* ─── Backgrounds (Global) ─── */}
+        <div className="pt-3 px-1 border-t border-forest-700/20 mt-2">
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-cream/30 flex items-center gap-2 mb-2 px-3">Backgrounds</label>
+          <div className="space-y-1.5 px-1">
+            <button
+              onClick={() => handleSetBackground('')}
+              className={`w-full py-1.5 rounded-lg border text-[10px] font-bold transition-all flex items-center justify-center gap-2 ${!backgroundUrl ? 'border-cream/40 bg-cream/10 text-cream' : 'border-white/5 text-cream/40 hover:border-white/15'}`}
+            >
+              <div className="w-2 h-2 bg-black border border-white/20 rounded-sm" /> Default Black
+            </button>
+            <div className="max-h-24 overflow-y-auto space-y-1 pr-0.5 custom-scrollbar">
+              {backgrounds.map(bg => {
+                const isActive = backgroundUrl === bg.url
+                const isDefault = defaultBgId === bg.id
+                return (
+                  <div key={bg.id} onClick={() => handleSetBackground(bg.url)}
+                    className={`w-full relative py-1.5 px-2 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-2 cursor-pointer group ${isActive ? 'border-gold/60 bg-gold/5 text-gold' : 'border-white/5 text-cream/40 hover:border-white/15'}`}>
+                    <div className="w-4 h-4 rounded-sm bg-cover bg-center shrink-0 border border-white/20" style={{ backgroundImage: `url(${bg.url})` }} />
+                    <span className="truncate flex-1 text-left">Custom Image</span>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={(e) => toggleDefaultBg(bg.id, e)} className={`p-1 rounded hover:bg-white/10 ${isDefault ? 'text-gold' : 'text-cream/30'}`}>★</button>
+                      <button onClick={(e) => removeBackground(bg.id, e)} className="p-1 rounded hover:bg-red-500/20 text-red-500">✕</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="relative">
+              <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              <button className="w-full py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg text-[10px] font-bold text-cream/50 flex items-center justify-center gap-1.5 transition-all">
+                <UploadCloud className="w-3 h-3 shrink-0" /> Upload Image
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Live Projection (directly below Backgrounds) ─── */}
         <div className="pt-2 mb-2 border-b border-forest-700/20 pb-4">
           <button
             onClick={() => setShowProjection(!showProjection)}
@@ -258,41 +294,6 @@ export function Sidebar() {
 
         {/* System Mode moved into Live Projection for better context */}
 
-        {/* ─── Backgrounds ─── */}
-        <div className="pt-3 px-1">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-cream/30 flex items-center gap-2 mb-2 px-3">Backgrounds</label>
-          <div className="space-y-1.5 px-1">
-            <button
-              onClick={() => handleSetBackground('')}
-              className={`w-full py-1.5 rounded-lg border text-[10px] font-bold transition-all flex items-center justify-center gap-2 ${!backgroundUrl ? 'border-cream/40 bg-cream/10 text-cream' : 'border-white/5 text-cream/40 hover:border-white/15'}`}
-            >
-              <div className="w-2 h-2 bg-black border border-white/20 rounded-sm" /> Default Black
-            </button>
-            <div className="max-h-24 overflow-y-auto space-y-1 pr-0.5 custom-scrollbar">
-              {backgrounds.map(bg => {
-                const isActive = backgroundUrl === bg.url
-                const isDefault = defaultBgId === bg.id
-                return (
-                  <div key={bg.id} onClick={() => handleSetBackground(bg.url)}
-                    className={`w-full relative py-1.5 px-2 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-2 cursor-pointer group ${isActive ? 'border-gold/60 bg-gold/5 text-gold' : 'border-white/5 text-cream/40 hover:border-white/15'}`}>
-                    <div className="w-4 h-4 rounded-sm bg-cover bg-center shrink-0 border border-white/20" style={{ backgroundImage: `url(${bg.url})` }} />
-                    <span className="truncate flex-1 text-left">Custom Image</span>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={(e) => toggleDefaultBg(bg.id, e)} className={`p-1 rounded hover:bg-white/10 ${isDefault ? 'text-gold' : 'text-cream/30'}`}>★</button>
-                      <button onClick={(e) => removeBackground(bg.id, e)} className="p-1 rounded hover:bg-red-500/20 text-red-500">✕</button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            <div className="relative">
-              <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              <button className="w-full py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg text-[10px] font-bold text-cream/50 flex items-center justify-center gap-1.5 transition-all">
-                <UploadCloud className="w-3 h-3 shrink-0" /> Upload Image
-              </button>
-            </div>
-          </div>
-        </div>
       </nav>
 
       {/* Sign Out */}

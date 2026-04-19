@@ -1,13 +1,14 @@
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const ref = searchParams.get('ref')
+  const translation = searchParams.get('translation') || 'kjv'
 
   if (!ref) {
     return Response.json({ error: 'Missing scripture reference' }, { status: 400 })
   }
 
   try {
-    const res = await fetch(`https://bible-api.com/${encodeURIComponent(ref)}`)
+    const res = await fetch(`https://bible-api.com/${encodeURIComponent(ref)}?translation=${translation}`)
     const data = await res.json()
 
     if (data.error) {

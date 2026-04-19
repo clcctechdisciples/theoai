@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
-import { FileText, Download, CheckCircle2, FileDown, BookOpen, Search, Plus, Trash2, Maximize } from 'lucide-react'
+import { FileText, Download, CheckCircle2, FileDown, BookOpen, Search, Plus, Trash2, Maximize, Eye, EyeOff } from 'lucide-react'
 import { detectScripture } from '@/lib/scriptureDetector'
 
 export default function SermonPage() {
@@ -17,6 +17,7 @@ export default function SermonPage() {
   const [scriptureToast, setScriptureToast] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [bibleQueue, setBibleQueue] = useState<{ reference: string, text: string }[]>([])
+  const [bibleVersion, setBibleVersion] = useState('kjv')
 
   useEffect(() => {
     const saved = localStorage.getItem('theoai_bible_queue')
@@ -108,7 +109,7 @@ export default function SermonPage() {
   const searchVerse = async () => {
     if (!searchQuery.trim()) return
     try {
-      const res = await fetch(`/api/bible?ref=${encodeURIComponent(searchQuery)}`)
+      const res = await fetch(`/api/bible?ref=${encodeURIComponent(searchQuery)}&translation=${bibleVersion}`)
       const data = await res.json()
       if (data.reference && data.text) {
         const newVerse = { reference: data.reference, text: data.text }
@@ -130,6 +131,23 @@ export default function SermonPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'setScripture', scripture: v })
     })
+  }
+
+  const clearProjection = async () => {
+    setDetectedScripture(null)
+    await fetch('/api/control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'setMode', mode: 'sermon' }) // This should clear scripture if handled correctly
+    })
+  }
+
+  const toggleProjectVerse = async (v: { reference: string, text: string }) => {
+    if (detectedScripture === v.reference) {
+      await clearProjection()
+    } else {
+      await projectStoredVerse(v)
+    }
   }
 
   const removeFromQueue = (idx: number) => {
@@ -248,7 +266,7 @@ export default function SermonPage() {
                 </div>
                 <div className="p-6 space-y-6 flex-1 flex flex-col min-h-0">
                   <div className="flex gap-3 shrink-0">
-                    <div className="flex-1 bg-black/40 border border-forest/30 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-gold/50 transition-all">
+                    <div className="flex-[2] bg-black/40 border border-forest/30 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-gold/50 transition-all">
                       <Search className="w-4 h-4 text-gold" />
                       <input 
                         placeholder="Search verse (e.g. Romans 8:28)" 
@@ -258,22 +276,38 @@ export default function SermonPage() {
                         onKeyDown={e => e.key === 'Enter' && searchVerse()}
                       />
                     </div>
+                    <select 
+                      value={bibleVersion}
+                      onChange={e => setBibleVersion(e.target.value)}
+                      className="flex-1 bg-black/40 border border-forest/30 rounded-xl px-2 text-[10px] font-black uppercase text-gold focus:outline-none focus:border-gold/50"
+                    >
+                      <option value="kjv">KJV</option>
+                      <option value="niv">NIV</option>
+                      <option value="asv">ASV</option>
+                      <option value="web">WEB</option>
+                      <option value="bbe">BBE</option>
+                    </select>
                     <button onClick={searchVerse} className="bg-forest px-6 py-3 rounded-xl text-cream text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Project</button>
                   </div>
                   
                   <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
-                    {bibleQueue.map((v, i) => (
-                      <div key={i} className="bg-dark-950/40 border border-white/5 p-4 rounded-xl group hover:border-gold/30 hover:bg-white/5 transition-all cursor-default">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-[10px] font-black text-gold uppercase tracking-[0.2em]">{v.reference}</span>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                             <button onClick={() => projectStoredVerse(v)} className="p-1.5 hover:bg-forest/20 rounded-lg text-forest-light" title="Project"><Maximize className="w-4 h-4"/></button>
-                             <button onClick={() => removeFromQueue(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400" title="Delete"><Trash2 className="w-4 h-4"/></button>
+                    {bibleQueue.map((v, i) => {
+                      const isProjected = detectedScripture === v.reference
+                      return (
+                        <div key={i} className={`bg-dark-950/40 border p-4 rounded-xl group transition-all cursor-default ${isProjected ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30 hover:bg-white/5'}`}>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isProjected ? 'text-gold' : 'text-gold/60'}`}>{v.reference}</span>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                               <button onClick={() => toggleProjectVerse(v)} className={`p-1.5 rounded-lg transition-all ${isProjected ? 'bg-gold text-dark-950' : 'hover:bg-forest/20 text-forest-light'}`} title={isProjected ? "Clear Projection" : "Project"}>
+                                 {isProjected ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
+                               </button>
+                               <button onClick={() => removeFromQueue(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400" title="Delete"><Trash2 className="w-4 h-4"/></button>
+                            </div>
                           </div>
+                          <p className={`text-sm leading-relaxed ${isProjected ? 'text-cream font-bold' : 'text-cream/70 line-clamp-2'}`}>{v.text}</p>
                         </div>
-                        <p className="text-sm text-cream/70 line-clamp-2 leading-relaxed">{v.text}</p>
-                      </div>
-                    ))}
+                      )
+                    })}
                     {bibleQueue.length === 0 && (
                       <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
                         <BookOpen className="w-12 h-12 mb-2" />

@@ -146,17 +146,15 @@ export default function DisplayPage() {
           </div>
         ) : (
           <div className="w-full h-full bg-black">
-            {state.mode === 'idle' && (
-              <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-                {/* Forest Green Radial glow */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#047361_0%,_transparent_70%)] opacity-20"></div>
-                {/* Modern subtle rays in forest/cream */}
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <div className="absolute w-[1px] h-[150%] bg-forest-500/20 rotate-45 blur-sm"></div>
-                  <div className="absolute w-[1px] h-[150%] bg-forest-500/20 -rotate-45 blur-sm"></div>
-                </div>
+            <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
+              {/* Forest Green Radial glow */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#047361_0%,_transparent_70%)] opacity-20"></div>
+              {/* Modern subtle rays in forest/cream */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                <div className="absolute w-[1px] h-[150%] bg-forest-500/20 rotate-45 blur-sm"></div>
+                <div className="absolute w-[1px] h-[150%] bg-forest-500/20 -rotate-45 blur-sm"></div>
               </div>
-            )}
+            </div>
           </div>
         )}
         {/* Global vignette */}
