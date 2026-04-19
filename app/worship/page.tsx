@@ -47,13 +47,41 @@ export default function WorshipPage() {
   }
 
   const handleTranscript = async (text: string) => {
-    const newLines = [text.substring(0, 30), text.substring(30, 60), text.substring(60)]
     try {
+      const res = await fetch('/api/ai-process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: text, mode: 'worship' })
+      })
+      const data = await res.json()
+
+      if (data.type === 'lyrics' && data.content.lines?.length > 0) {
+        await fetch('/api/control', {
+          method: 'POST',
+          body: JSON.stringify({ 
+            action: 'setLyrics', 
+            lines: data.content.lines, 
+            section: 'AI Detected Lyrics' 
+          })
+        })
+      } else if (data.type === 'scripture' && data.content.reference) {
+        await fetch('/api/control', {
+          method: 'POST',
+          body: JSON.stringify({ 
+            action: 'setScripture', 
+            scripture: { reference: data.content.reference, text: data.content.text } 
+          })
+        })
+      }
+    } catch (e) {
+      console.error('AI worship detection error:', e)
+      // Fallback to basic display if AI fails
+      const fallbackLines = [text.substring(0, 35), text.substring(35, 70)]
       await fetch('/api/control', {
         method: 'POST',
-        body: JSON.stringify({ action: 'setLyrics', lines: newLines.filter(l => l.trim().length > 0), section: 'Live Audio' })
+        body: JSON.stringify({ action: 'setLyrics', lines: fallbackLines.filter(l => l.trim().length > 0), section: 'Live Audio' })
       })
-    } catch (e) {}
+    }
   }
 
   const saveToLibrary = async () => {

@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
-import { FileText, Download, CheckCircle2, FileDown, BookOpen } from 'lucide-react'
+import { FileText, Download, CheckCircle2, FileDown, BookOpen, Search, Plus, Trash2, Maximize } from 'lucide-react'
 import { detectScripture } from '@/lib/scriptureDetector'
 
 export default function SermonPage() {
@@ -15,6 +15,20 @@ export default function SermonPage() {
   const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null)
   const [detectedScripture, setDetectedScripture] = useState<string | null>(null)
   const [scriptureToast, setScriptureToast] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [bibleQueue, setBibleQueue] = useState<{ reference: string, text: string }[]>([])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theoai_bible_queue')
+    if (saved) {
+      try { setBibleQueue(JSON.parse(saved)) } catch (e) {}
+    }
+  }, [])
+
+  const saveQueue = (newQueue: any[]) => {
+    setBibleQueue(newQueue)
+    localStorage.setItem('theoai_bible_queue', JSON.stringify(newQueue))
+  }
 
   const endRef = useRef<HTMLDivElement>(null)
   const lastPushedRef = useRef<string>('')
@@ -33,32 +47,95 @@ export default function SermonPage() {
       setTranscript(newTranscript)
       setInterimTranscript('')
 
-      // Scripture auto-detection
-      const ref = detectScripture(text)
-      if (ref && ref !== lastPushedRef.current) {
-        lastPushedRef.current = ref
-        setDetectedScripture(ref)
-        setScriptureToast(ref)
-        setTimeout(() => setScriptureToast(null), 5000)
+      // AI Injected Detection
+      try {
+        const res = await fetch('/api/ai-process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript: text, mode: 'sermon' })
+        })
+        const data = await res.json()
+        
+        if (data.type === 'scripture' && data.content.reference) {
+          const ref = data.content.reference
+          if (ref !== lastPushedRef.current) {
+            lastPushedRef.current = ref
+            setDetectedScripture(ref)
+            setScriptureToast(ref)
+            setTimeout(() => setScriptureToast(null), 5000)
 
-        // Fetch verse and push to projector
-        try {
-          const res = await fetch(`/api/bible?ref=${encodeURIComponent(ref)}`)
-          const data = await res.json()
-          if (data.reference && data.text) {
+            const scriptureData = { reference: ref, text: data.content.text }
+            
+            // Auto-add to queue if not present
+            if (!bibleQueue.some(v => v.reference === ref)) {
+              saveQueue([scriptureData, ...bibleQueue].slice(0, 20))
+            }
+
             await fetch('/api/control', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'setScripture', scripture: { reference: data.reference, text: data.text } })
+              body: JSON.stringify({ action: 'setScripture', scripture: scriptureData })
             })
           }
-        } catch (e) {
-          console.error('Scripture fetch error:', e)
+        }
+      } catch (e) {
+        console.error('AI injection error:', e)
+        // Fallback to simple regex
+        const ref = detectScripture(text)
+        if (ref && ref !== lastPushedRef.current) {
+          lastPushedRef.current = ref
+          setDetectedScripture(ref)
+          setScriptureToast(ref)
+          setTimeout(() => setScriptureToast(null), 5000)
+          fetch(`/api/bible?ref=${encodeURIComponent(ref)}`)
+            .then(r => r.json())
+            .then(d => {
+              if (d.reference && d.text) {
+                fetch('/api/control', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'setScripture', scripture: { reference: d.reference, text: d.text } })
+                })
+              }
+            })
         }
       }
     } else {
       setInterimTranscript(text)
     }
+  }
+
+  const searchVerse = async () => {
+    if (!searchQuery.trim()) return
+    try {
+      const res = await fetch(`/api/bible?ref=${encodeURIComponent(searchQuery)}`)
+      const data = await res.json()
+      if (data.reference && data.text) {
+        const newVerse = { reference: data.reference, text: data.text }
+        if (!bibleQueue.some(v => v.reference === data.reference)) {
+          saveQueue([newVerse, ...bibleQueue])
+        }
+        projectStoredVerse(newVerse)
+        setSearchQuery('')
+      } else {
+        alert('Verse not found.')
+      }
+    } catch (e) { alert('Error fetching verse.') }
+  }
+
+  const projectStoredVerse = async (v: { reference: string, text: string }) => {
+    setDetectedScripture(v.reference)
+    await fetch('/api/control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'setScripture', scripture: v })
+    })
+  }
+
+  const removeFromQueue = (idx: number) => {
+    const next = [...bibleQueue]
+    next.splice(idx, 1)
+    saveQueue(next)
   }
 
   const generateSummary = async () => {
@@ -131,32 +208,80 @@ export default function SermonPage() {
 
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
             {/* Live Transcript Log */}
-            <div className="lg:col-span-2 glass-card rounded-2xl flex flex-col border border-forest/30 overflow-hidden">
-              <div className="p-4 border-b border-forest/30 bg-forest-700/30 flex justify-between items-center">
-                <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-cream flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-gold-light" /> Transcript
-                </h2>
-                <div className="flex items-center gap-3">
-                  {detectedScripture && (
-                    <span className="text-[10px] font-black text-gold bg-gold/10 px-2 py-1 rounded-full border border-gold/30">
-                      📖 {detectedScripture}
-                    </span>
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              <div className="glass-card rounded-2xl flex-1 flex flex-col border border-forest/30 overflow-hidden min-h-[300px]">
+                <div className="p-4 border-b border-forest/30 bg-forest-700/30 flex justify-between items-center">
+                  <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-cream flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gold-light" /> Transcript
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    {detectedScripture && (
+                      <span className="text-[10px] font-black text-gold bg-gold/10 px-2 py-1 rounded-full border border-gold/30">
+                        📖 {detectedScripture}
+                      </span>
+                    )}
+                    {transcript && <div className="text-[10px] font-black text-cream/40 uppercase tracking-widest bg-dark-950 px-3 py-1 rounded-full">{transcript.split(' ').length} words</div>}
+                  </div>
+                </div>
+                <div className="p-6 overflow-y-auto flex-1 font-inter text-cream/80 leading-relaxed text-lg bg-dark/40">
+                  {transcript || interimTranscript ? (
+                    <p>
+                      {transcript}
+                      <span className="text-cream/40 italic ml-2">{interimTranscript}</span>
+                    </p>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-cream/30 italic">
+                      Start the audio engine to begin transcribing...
+                    </div>
                   )}
-                  {transcript && <div className="text-[10px] font-black text-cream/40 uppercase tracking-widest bg-dark-950 px-3 py-1 rounded-full">{transcript.split(' ').length} words</div>}
+                  <div ref={endRef} />
                 </div>
               </div>
-              <div className="p-6 overflow-y-auto flex-1 font-inter text-cream/80 leading-relaxed text-lg bg-dark/40">
-                {transcript || interimTranscript ? (
-                  <p>
-                    {transcript}
-                    <span className="text-cream/40 italic ml-2">{interimTranscript}</span>
-                  </p>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-cream/30 italic">
-                    Start the audio engine to begin transcribing...
+
+              {/* Bible Controller (Now part of the main grid) */}
+              <div className="glass-card rounded-2xl flex flex-col border border-forest/30 overflow-hidden h-[400px]">
+                <div className="p-4 border-b border-forest/30 bg-forest-700/30 flex justify-between items-center">
+                  <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-cream flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-gold-light" /> Bible Controller
+                  </h2>
+                  <span className="text-[10px] font-black text-cream/30 uppercase tracking-widest">{bibleQueue.length} Stored</span>
+                </div>
+                <div className="p-6 space-y-6 flex-1 flex flex-col min-h-0">
+                  <div className="flex gap-3 shrink-0">
+                    <div className="flex-1 bg-black/40 border border-forest/30 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-gold/50 transition-all">
+                      <Search className="w-4 h-4 text-gold" />
+                      <input 
+                        placeholder="Search verse (e.g. Romans 8:28)" 
+                        className="bg-transparent border-none text-cream focus:outline-none text-sm w-full font-bold"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && searchVerse()}
+                      />
+                    </div>
+                    <button onClick={searchVerse} className="bg-forest px-6 py-3 rounded-xl text-cream text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Project</button>
                   </div>
-                )}
-                <div ref={endRef} />
+                  
+                  <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+                    {bibleQueue.map((v, i) => (
+                      <div key={i} className="bg-dark-950/40 border border-white/5 p-4 rounded-xl group hover:border-gold/30 hover:bg-white/5 transition-all cursor-default">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[10px] font-black text-gold uppercase tracking-[0.2em]">{v.reference}</span>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                             <button onClick={() => projectStoredVerse(v)} className="p-1.5 hover:bg-forest/20 rounded-lg text-forest-light" title="Project"><Maximize className="w-4 h-4"/></button>
+                             <button onClick={() => removeFromQueue(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400" title="Delete"><Trash2 className="w-4 h-4"/></button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-cream/70 line-clamp-2 leading-relaxed">{v.text}</p>
+                      </div>
+                    ))}
+                    {bibleQueue.length === 0 && (
+                      <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
+                        <BookOpen className="w-12 h-12 mb-2" />
+                        <p className="text-[10px] uppercase font-black tracking-widest">Queue Empty</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
