@@ -20,6 +20,59 @@ export function AudioEngine({ mode, onTranscript, onRecordingComplete }: { mode:
   const intendedToRecordRef = useRef(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const sessionIdRef = useRef('')
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationRef = useRef<number>()
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+
+  useEffect(() => {
+    // Cleanup on unmount
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
+      if (audioContextRef.current) audioContextRef.current.close()
+    }
+  }, [])
+
+  const startVisualizer = (stream: MediaStream) => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const source = audioContext.createMediaStreamSource(stream)
+    const analyser = audioContext.createAnalyser()
+    analyser.fftSize = 256
+    source.connect(analyser)
+    
+    audioContextRef.current = audioContext
+    analyserRef.current = analyser
+
+    const bufferLength = analyser.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const draw = () => {
+      animationRef.current = requestAnimationFrame(draw)
+      analyser.getByteFrequencyData(dataArray)
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const barWidth = (canvas.width / bufferLength) * 2.5
+      let barHeight
+      let x = 0
+
+      for (let i = 0; i < bufferLength; i++) {
+        barHeight = (dataArray[i] / 255) * canvas.height
+        ctx.fillStyle = `rgba(201, 168, 76, ${dataArray[i] / 255 + 0.2})`
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight)
+        x += barWidth + 1
+      }
+    }
+    draw()
+  }
+
+  const stopVisualizer = () => {
+    if (animationRef.current) cancelAnimationFrame(animationRef.current)
+    if (audioContextRef.current) audioContextRef.current.close()
+  }
 
   useEffect(() => {
     const saved = localStorage.getItem('theoai_mic_device')
@@ -82,13 +135,17 @@ export function AudioEngine({ mode, onTranscript, onRecordingComplete }: { mode:
       intendedToRecordRef.current = false
       recognitionRef.current.stop()
       if (mediaRecorderRef.current) mediaRecorderRef.current.stop()
+      stopVisualizer()
       setIsRecording(false)
     } else {
       try {
-         // Start Audio Archiving to backend
          const stream = await navigator.mediaDevices.getUserMedia({ 
            audio: selectedDeviceId !== 'default' ? { deviceId: { exact: selectedDeviceId } } : true 
          })
+         
+         sessionIdRef.current = Math.random().toString(36).substring(7)
+         startVisualizer(stream)
+
          const mr = new MediaRecorder(stream)
          let localChunks: Blob[] = []
          
@@ -109,26 +166,29 @@ export function AudioEngine({ mode, onTranscript, onRecordingComplete }: { mode:
              localChunks = []
            }
          }
-         mr.start(5000) // send every 5 seconds
+         mr.start(5000) 
          mediaRecorderRef.current = mr
 
          intendedToRecordRef.current = true
          recognitionRef.current.start()
          setIsRecording(true)
       } catch(e) {
-         setIsRecording(true)
+         setError('Failed to access microphone: ' + (e as Error).message)
       }
     }
   }
 
   return (
-    <div className="glass-card p-4 flex items-center gap-4 rounded-xl mb-6 border border-forest/30 flex-wrap">
-      <div className="flex-1 min-w-[200px]">
+    <div className="glass-card p-4 flex items-center gap-4 rounded-xl mb-6 border border-forest/30 flex-wrap overflow-hidden">
+      <div className="flex-1 min-w-[150px]">
         <label className="text-xs text-cream/70 uppercase tracking-wider block mb-1">Audio Input Mode</label>
         {error ? (
-          <div className="text-red-400 text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4"/> {error}</div>
+          <div className="text-red-400 text-[10px] flex items-center gap-2 font-bold uppercase"><AlertCircle className="w-3 h-3"/> {error}</div>
         ) : (
-          <div className="text-forest-light text-sm font-medium">Native Browser STT Active</div>
+          <div className="flex items-center gap-4">
+            <div className="text-forest-light text-xs font-black uppercase tracking-widest">Active</div>
+            <canvas ref={canvasRef} width="120" height="20" className="opacity-60" />
+          </div>
         )}
       </div>
 
@@ -140,28 +200,28 @@ export function AudioEngine({ mode, onTranscript, onRecordingComplete }: { mode:
           disabled={isRecording}
           className="bg-transparent border-none text-xs text-cream/80 focus:outline-none flex-1 truncate max-w-[200px]"
         >
-          <option value="default" className="bg-dark text-cream">Default System Microphone</option>
+          <option value="default" className="bg-dark text-cream">Default Microphone</option>
           {devices.map(d => (
             <option key={d.deviceId} value={d.deviceId} className="bg-dark text-cream">
-              {d.label || `Microphone ${d.deviceId.substring(0,5)}...`}
+              {d.label || `Mic ${d.deviceId.substring(0,5)}`}
             </option>
           ))}
         </select>
       </div>
 
       <div className="flex items-center gap-4 ml-auto">
-        {isRecording && <div className="text-red-400 text-xs font-bold uppercase record-pulse flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /> LIVE RECOGNITION</div>}
+        {isRecording && <div className="text-red-400 text-[10px] font-black uppercase record-pulse flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" /> Live</div>}
         <button
           onClick={toggleRecording}
           disabled={!!error}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold transition-all ${
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-all ${
             isRecording 
             ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30' 
-            : 'forest-gradient text-cream hover:brightness-110 shadow-[0_0_20px_rgba(74,124,89,0.4)] disabled:opacity-50'
+            : 'forest-gradient text-cream hover:brightness-110 shadow-lg disabled:opacity-50'
           }`}
         >
-          {isRecording ? <Square className="w-4 h-4 fill-current" /> : <Mic className="w-4 h-4" />}
-          {isRecording ? 'Stop' : 'Engage Audio Engine'}
+          {isRecording ? <Square className="w-3 h-3 fill-current" /> : <Mic className="w-3 h-3" />}
+          {isRecording ? 'Stop' : 'Engage Engine'}
         </button>
       </div>
     </div>

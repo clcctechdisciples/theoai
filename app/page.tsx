@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { Sidebar } from '@/components/Sidebar'
-import { Music, MessageSquare, History, MonitorPlay } from 'lucide-react'
+import { Music, MessageSquare, History, MonitorPlay, Presentation } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function Dashboard() {
@@ -67,6 +67,16 @@ export default async function Dashboard() {
             <h2 className="font-cinzel text-xl font-bold text-cream mb-2">Live Projection</h2>
             <p className="text-sm text-cream/60 leading-relaxed group-hover:text-cream transition-colors">
               Direct and monitor the live projector output. Manage connected displays and visual backgrounds in real-time.
+            </p>
+          </Link>
+
+          <Link href="/slides" className="glass-card p-6 rounded-2xl border border-cream/20 hover:border-gold/50 transition-all group hover:-translate-y-1 block bg-forest-dark/30 hover:bg-forest/30">
+            <div className="w-12 h-12 rounded-xl bg-forest border border-gold/30 flex items-center justify-center mb-4 transition-all group-hover:bg-gold/20 group-hover:border-gold glow-forest">
+              <Presentation className="w-6 h-6 text-gold" />
+            </div>
+            <h2 className="font-cinzel text-xl font-bold text-cream mb-2">Slides Display</h2>
+            <p className="text-sm text-cream/60 leading-relaxed group-hover:text-cream transition-colors">
+              Upload and display PDF/PowerPoint slides. Manage your slide deck and project them sequentially.
             </p>
           </Link>
         </div>

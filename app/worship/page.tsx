@@ -16,6 +16,28 @@ export default function WorshipPage() {
   const [bulkLoading, setBulkLoading] = useState(false)
   const [songQueue, setSongQueue] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [bibleSearch, setBibleSearch] = useState('')
+  const [bibleVersion, setBibleVersion] = useState('kjv')
+  const [chapterVerses, setChapterVerses] = useState<{ reference: string, verses: { verse: number, text: string }[] } | null>(null)
+
+  const searchBible = async () => {
+    if (!bibleSearch.trim()) return
+    setChapterVerses(null)
+    try {
+      const res = await fetch(`/api/bible?ref=${encodeURIComponent(bibleSearch)}&translation=${bibleVersion}`)
+      const data = await res.json()
+      if (data.verses) {
+        setChapterVerses(data)
+        setBibleSearch('')
+      } else if (data.reference && data.text) {
+        await fetch('/api/control', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'setScripture', scripture: { reference: data.reference, text: data.text } })
+        })
+        setBibleSearch('')
+      }
+    } catch (e) { console.error('Worship Bible search error:', e) }
+  }
 
   useEffect(() => {
     fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : [])).catch(() => {})
@@ -130,9 +152,35 @@ export default function WorshipPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto p-8 relative">
           {/* Header */}
-          <div className="mb-6 flex justify-between items-center">
-            <h1 className="text-4xl font-cinzel font-black tracking-tighter text-cream uppercase">Worship</h1>
-            <div className="flex items-center gap-3">
+          <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h1 className="text-4xl font-cinzel font-black tracking-tighter text-cream uppercase shrink-0">Worship</h1>
+            
+            {/* Quick Bible Search */}
+            <div className="flex-1 max-w-xl flex items-center gap-2 bg-dark/50 border border-forest/30 rounded-full px-4 py-1.5 ml-0 md:ml-4">
+              <select 
+                value={bibleVersion}
+                onChange={e => setBibleVersion(e.target.value)}
+                className="bg-transparent border-none text-[10px] font-black text-gold uppercase tracking-widest focus:outline-none cursor-pointer"
+              >
+                <option value="kjv" className="bg-dark">KJV</option>
+                <option value="nlt" className="bg-dark">NLT</option>
+                <option value="niv" className="bg-dark">NIV</option>
+                <option value="amp" className="bg-dark">AMP</option>
+              </select>
+              <div className="w-[1px] h-4 bg-white/10 mx-1" />
+              <Search className="w-3.5 h-3.5 text-cream/30" />
+              <input 
+                value={bibleSearch}
+                onChange={e => setBibleSearch(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && searchBible()}
+                placeholder="Quick Scripture (e.g. John 3:16)"
+                className="bg-transparent border-none text-xs text-cream focus:outline-none w-full font-medium"
+              />
+              <button onClick={searchBible} className="text-[10px] font-black uppercase text-gold hover:text-white transition-colors">Search</button>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+
               <button
                 onClick={() => fetch('/api/control', { method: 'POST', body: JSON.stringify({ action: 'setMode', mode: 'idle' }) })}
                 className="bg-forest/20 border border-forest/30 hover:bg-forest/40 text-cream px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all"
@@ -160,7 +208,34 @@ export default function WorshipPage() {
             </div>
           </div>
 
+          {/* Chapter Verse Selection */}
+          {chapterVerses && (
+            <div className="glass-card mb-6 p-6 rounded-2xl border border-gold/30 bg-forest-950/50">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gold">{chapterVerses.reference} — Select Verse to Project</h3>
+                <button onClick={() => setChapterVerses(null)} className="text-[10px] font-black uppercase text-cream/40 hover:text-cream"><X className="w-4 h-4"/></button>
+              </div>
+              <div className="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-12 gap-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-2">
+                {chapterVerses.verses.map((v, i) => (
+                  <button
+                    key={i}
+                    onClick={async () => {
+                      await fetch('/api/control', {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'setScripture', scripture: { reference: `${chapterVerses.reference}:${v.verse}`, text: v.text } })
+                      })
+                    }}
+                    className="aspect-square flex items-center justify-center bg-dark/60 border border-white/5 rounded-xl text-xs font-bold text-cream/60 hover:bg-gold hover:text-dark-950 transition-all hover:scale-110 active:scale-95"
+                  >
+                    {v.verse}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Song Library */}
+
           {showLibrary && (
             <div className="glass-card mb-6 p-6 rounded-2xl border border-gold/30">
               <div className="flex items-center gap-3 mb-4 bg-dark/50 border border-forest/30 rounded-xl px-4 py-2">

@@ -1,37 +1,32 @@
-import fs from 'fs'
-import path from 'path'
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
 
-  const exportsDir = path.join(process.cwd(), 'exports', userId)
-  
-  if (!fs.existsSync(exportsDir)) {
-    fs.mkdirSync(exportsDir, { recursive: true })
-  }
-
   try {
-    const files = fs.readdirSync(exportsDir)
-    
-    const recordings = files.map((file, i) => {
-      const stats = fs.statSync(path.join(exportsDir, file))
-      return {
-        id: i,
-        title: file.replace(/\.(wav|mp3|webm)$/i, ''),
-        date: stats.birthtime.toLocaleDateString(),
-        duration: 'Unknown', 
-        type: file.split('.').pop()?.toUpperCase() || 'Audio',
-        filename: `${userId}/${file}`
-      }
+    const records = await prisma.recording.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
     })
+    
+    const recordings = records.map((rec) => ({
+      id: rec.id,
+      title: rec.title,
+      date: rec.createdAt.toLocaleDateString(),
+      duration: 'Unknown', 
+      type: rec.type.toUpperCase(),
+      filename: rec.filename
+    }))
 
     return NextResponse.json(recordings)
   } catch (err: any) {
+    console.error('List recordings error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+

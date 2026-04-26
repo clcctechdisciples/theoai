@@ -20,6 +20,7 @@ model User {
   updatedAt        DateTime     @updatedAt
   songs            Song[]
   backgrounds      Background[]
+  recordings       Recording[]
   settings         Settings?
 }
 
@@ -31,6 +32,19 @@ model Song {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Recording {
+  id        String   @id @default(cuid())
+  title     String
+  filename  String
+  type      String   // e.g. "sermon", "worship"
+  data      Bytes?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 
   @@index([userId])
 }

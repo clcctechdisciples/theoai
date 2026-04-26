@@ -18,6 +18,7 @@ export default function SermonPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [bibleQueue, setBibleQueue] = useState<{ reference: string, text: string }[]>([])
   const [bibleVersion, setBibleVersion] = useState('kjv')
+  const [chapterVerses, setChapterVerses] = useState<{ reference: string, verses: { verse: number, text: string }[] } | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('theoai_bible_queue')
@@ -108,10 +109,15 @@ export default function SermonPage() {
 
   const searchVerse = async () => {
     if (!searchQuery.trim()) return
+    setChapterVerses(null)
     try {
       const res = await fetch(`/api/bible?ref=${encodeURIComponent(searchQuery)}&translation=${bibleVersion}`)
       const data = await res.json()
-      if (data.reference && data.text) {
+      
+      if (data.verses) {
+        setChapterVerses(data)
+        setSearchQuery('')
+      } else if (data.reference && data.text) {
         const newVerse = { reference: data.reference, text: data.text }
         if (!bibleQueue.some(v => v.reference === data.reference)) {
           saveQueue([newVerse, ...bibleQueue])
@@ -293,7 +299,34 @@ export default function SermonPage() {
                     <button onClick={searchVerse} className="bg-forest px-6 py-3 rounded-xl text-cream text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Project</button>
                   </div>
                   
+                  {chapterVerses && (
+                    <div className="bg-forest-950/50 border border-gold/30 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-gold">{chapterVerses.reference} Verses</h3>
+                        <button onClick={() => setChapterVerses(null)} className="text-[10px] font-black uppercase text-cream/40 hover:text-cream">Close</button>
+                      </div>
+                      <div className="grid grid-cols-5 sm:grid-cols-8 gap-2 max-h-[120px] overflow-y-auto custom-scrollbar pr-1">
+                        {chapterVerses.verses.map((v, i) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              const newVerse = { reference: `${chapterVerses.reference}:${v.verse}`, text: v.text }
+                              if (!bibleQueue.some(q => q.reference === newVerse.reference)) {
+                                saveQueue([newVerse, ...bibleQueue])
+                              }
+                              projectStoredVerse(newVerse)
+                            }}
+                            className="aspect-square flex items-center justify-center bg-dark-900 border border-white/5 rounded-lg text-xs font-bold text-cream/60 hover:bg-gold hover:text-dark-950 transition-all"
+                          >
+                            {v.verse}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+
                     {bibleQueue.map((v, i) => {
                       const isProjected = detectedScripture === v.reference
                       return (

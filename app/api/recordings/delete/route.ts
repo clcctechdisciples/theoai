@@ -1,8 +1,7 @@
-import fs from 'fs'
-import path from 'path'
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 
 export async function POST(req: Request) {
   try {
@@ -13,19 +12,14 @@ export async function POST(req: Request) {
     if (!session?.user) return new NextResponse('Unauthorized', { status: 401 })
     const userId = (session.user as any).id
 
-    if (!filename.startsWith(`${userId}/`)) {
-      return new NextResponse('Unauthorized', { status: 401 })
-    }
-
-    const exportsDir = path.join(process.cwd(), 'exports')
-    const filePath = path.join(exportsDir, filename)
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath)
-    }
+    await prisma.recording.deleteMany({
+      where: { userId, filename }
+    })
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
+    console.error('Delete recording error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+

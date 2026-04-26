@@ -9,9 +9,10 @@ const navItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Worship Engine', href: '/worship', icon: Music },
   { label: 'Sermon Engine', href: '/sermon', icon: MessageSquare },
+  { label: 'Live Projection', href: '/display', icon: MonitorPlay },
+  { label: 'Slides Display', href: '/slides', icon: Presentation },
   { label: 'Audio Engine', href: '/audio-engine', icon: Settings },
   { label: 'Audio Archive', href: '/audio', icon: History },
-  { label: 'Slides Display', href: '/slides', icon: Presentation },
 ]
 
 export function Sidebar() {

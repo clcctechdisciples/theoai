@@ -3,10 +3,26 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const { transcript, mode } = await req.json();
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const backendUrl = process.env.AI_BACKEND_URL;
 
+    if (backendUrl) {
+      const cleanUrl = backendUrl.replace(/\/$/, '')
+      try {
+        const res = await fetch(`${cleanUrl}/api/ai-process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript, mode })
+        })
+        if (res.ok) {
+          const result = await res.json()
+          return NextResponse.json(result)
+        }
+      } catch (e) { console.error('HF Backend ai-process error:', e) }
+    }
+
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ type: 'none', error: 'API key missing' });
+      return NextResponse.json({ type: 'none', error: 'AI Backend and API Key missing' });
     }
 
     const prompt = `You are an elite AI church media assistant specializing in real-time lyric and scripture detection. 
@@ -42,7 +58,7 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'google/gemini-flash-1.5', // Faster and cheaper for this task
+        model: 'google/gemini-pro-1.5',
         messages: [{ role: 'user', content: prompt }],
         response_format: { type: 'json_object' }
       })

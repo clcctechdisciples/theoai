@@ -9,11 +9,34 @@ export async function POST(req: Request) {
 
   try {
     const { content } = await req.json()
-    const apiKey = process.env.OPENROUTER_API_KEY
-
-    if (!apiKey) {
-      throw new Error("AI API Key missing")
+    const backendUrl = process.env.AI_BACKEND_URL
+    
+    if (backendUrl) {
+      const cleanUrl = backendUrl.replace(/\/$/, '')
+      try {
+        const res = await fetch(`${cleanUrl}/api/bulk-songs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        })
+        
+        if (res.ok) {
+          const result = await res.json()
+          const songs = result.songs || result || [] // Handle both formats
+          if (Array.isArray(songs)) {
+            for (const song of songs) {
+              if (song.title && song.lyrics) {
+                await saveData((session.user as any).id, 'songs', song)
+              }
+            }
+            return NextResponse.json({ success: true, count: songs.length })
+          }
+        }
+      } catch (e) { console.error('HF Backend bulk-songs error:', e) }
     }
+
+    const apiKey = process.env.OPENROUTER_API_KEY
+    if (!apiKey) throw new Error("AI Backend and API Key missing")
 
     const prompt = `You are a professional music librarian for a church. Analyze the following text which contains a list of songs, setlists, or raw lyrics.
     
@@ -43,8 +66,8 @@ export async function POST(req: Request) {
         'X-Title': 'Theo AI'
       },
       body: JSON.stringify({
-        model: 'google/gemini-flash-1.5',
-        messages: [{ role: 'system', content: 'You are a professional music librarian. Your task is to analyze text files containing song lists or lyrics and extract them into a clean JSON format.' }, { role: 'user', content: prompt }],
+        model: 'google/gemini-pro-1.5', // More stable
+        messages: [{ role: 'system', content: 'You are a professional music librarian.' }, { role: 'user', content: prompt }],
       })
     })
 

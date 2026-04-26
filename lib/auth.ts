@@ -21,6 +21,20 @@ export const authOptions: NextAuthOptions = {
           const bcrypt = await import('bcryptjs')
           const isAdminPassValid = adminPass && (credentials.password === adminPass || await bcrypt.compare(credentials.password, adminPass))
           if (isAdminPassValid) {
+            // Ensure admin exists in DB for foreign key relations
+            try {
+              const { prisma } = await import('./db')
+              await prisma.user.upsert({
+                where: { username: adminUser },
+                update: {},
+                create: {
+                  id: 'admin',
+                  username: adminUser,
+                  password: await bcrypt.hash(adminPass, 10)
+                }
+              })
+            } catch (e) { console.error('Admin sync error:', e) }
+
             return { id: 'admin', name: 'Admin', email: 'admin@clcc.church' }
           }
         }
