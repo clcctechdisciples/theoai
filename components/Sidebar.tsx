@@ -263,9 +263,7 @@ export function Sidebar() {
           )
         })}
         
-        {/* ─── Backgrounds (Global) ─── */}v>
-          )}
-        </div>
+        {/* ─── Backgrounds (Global) ─── */}
 
         {/* System Mode moved into Live Projection for better context */}
 
