@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  id               String       @id @default(cuid())
   username         String       @unique
   password         String
   securityQuestion String?
@@ -24,10 +24,10 @@ model User {
 }
 
 model Song {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid())
   title     String
-  lyrics    String   @db.String
-  userId    String   @db.ObjectId
+  lyrics    String   @db.Text
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -36,10 +36,10 @@ model Song {
 }
 
 model Background {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  url       String   @db.String
+  id        String   @id @default(cuid())
+  url       String   @db.Text
   isDefault Boolean  @default(false)
-  userId    String   @db.ObjectId
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
@@ -47,9 +47,9 @@ model Background {
 }
 
 model Settings {
-  id               String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String  @unique @db.ObjectId
+  id               String  @id @default(cuid())
+  userId           String  @unique
   user             User    @relation(fields: [userId], references: [id])
-  defaultBgUrl     String? @db.String
+  defaultBgUrl     String? @db.Text
   bibleTranslation String  @default("kjv")
 }
