@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  username         String       @unique
+  password         String
+  securityQuestion String?
+  securityAnswer   String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  songs            Song[]
+  backgrounds      Background[]
+  settings         Settings?
+}
+
+model Song {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  lyrics    String   @db.String
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Background {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  url       String   @db.String
+  isDefault Boolean  @default(false)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Settings {
+  id               String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String  @unique @db.ObjectId
+  user             User    @relation(fields: [userId], references: [id])
+  defaultBgUrl     String? @db.String
+  bibleTranslation String  @default("kjv")
+}

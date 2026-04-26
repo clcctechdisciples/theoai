@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { Sidebar } from '@/components/Sidebar'
-import { Music, MessageSquare, History } from 'lucide-react'
+import { Music, MessageSquare, History, MonitorPlay } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function Dashboard() {
@@ -19,7 +19,7 @@ export default async function Dashboard() {
           <h1 className="text-6xl font-cinzel font-black text-cream tracking-tighter">Welcome, {session?.user?.name || 'Admin'}</h1>
           <p className="text-cream/40 mt-4 text-sm max-w-lg leading-relaxed font-medium">Theo AI is engaged and ready to assist with today's church experience. Select an engine to begin.</p>
           
-          {process.env.VERCEL === '1' && (
+          {process.env.VERCEL === '1' && !process.env.DATABASE_URL && (
             <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl max-w-lg">
               <p className="text-[10px] text-amber-200 uppercase font-black tracking-widest mb-1">⚠️ Storage Warning</p>
               <p className="text-[10px] text-amber-200/60 leading-relaxed font-bold">
@@ -59,12 +59,21 @@ export default async function Dashboard() {
               Access and manage your high-fidelity service recordings. Review past sermons, download audio, or manage your media library.
             </p>
           </Link>
+
+          <Link href="/display" className="glass-card p-6 rounded-2xl border border-cream/20 hover:border-gold/50 transition-all group hover:-translate-y-1 block bg-forest-dark/30 hover:bg-forest/30">
+            <div className="w-12 h-12 rounded-xl bg-forest border border-gold/30 flex items-center justify-center mb-4 transition-all group-hover:bg-gold/20 group-hover:border-gold glow-forest">
+              <MonitorPlay className="w-6 h-6 text-gold" />
+            </div>
+            <h2 className="font-cinzel text-xl font-bold text-cream mb-2">Live Projection</h2>
+            <p className="text-sm text-cream/60 leading-relaxed group-hover:text-cream transition-colors">
+              Direct and monitor the live projector output. Manage connected displays and visual backgrounds in real-time.
+            </p>
+          </Link>
         </div>
 
         <div className="mt-20">
           <div className="flex items-center justify-between mb-10">
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cream/30">System Status</h2>
-            <div className="h-px flex-1 mx-8 bg-white/5"></div>
           </div>
           <div className="glass-card rounded-[2.5rem] p-20 text-center text-cream/10 font-black uppercase tracking-[0.4em] text-sm border border-white/5">
             Logs Clear

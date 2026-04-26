@@ -282,10 +282,13 @@ export default function SermonPage() {
                       className="flex-1 bg-black/60 border border-forest/40 rounded-xl px-2 text-[10px] font-black uppercase text-gold cursor-pointer focus:outline-none focus:border-gold/50 appearance-none text-center hover:bg-black/80 transition-all"
                     >
                       <option value="kjv" className="bg-forest-950 text-gold">KJV (King James)</option>
+                      <option value="nlt" className="bg-forest-950 text-gold">NLT (New Living Translation)</option>
+                      <option value="niv" className="bg-forest-950 text-gold">NIV (New International Version)</option>
+                      <option value="amp" className="bg-forest-950 text-gold">AMP (Amplified Bible)</option>
                       <option value="asv" className="bg-forest-950 text-gold">ASV (American Standard)</option>
                       <option value="web" className="bg-forest-950 text-gold">WEB (World English)</option>
                       <option value="bbe" className="bg-forest-950 text-gold">BBE (Basic English)</option>
-                      <option value="oeb-us" className="bg-forest-950 text-gold">OEB (Open English)</option>
+                      <option value="almeida" className="bg-forest-950 text-gold">ALMEIDA (Portuguese)</option>
                     </select>
                     <button onClick={searchVerse} className="bg-forest px-6 py-3 rounded-xl text-cream text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Project</button>
                   </div>
@@ -294,14 +297,19 @@ export default function SermonPage() {
                     {bibleQueue.map((v, i) => {
                       const isProjected = detectedScripture === v.reference
                       return (
-                        <div key={i} className={`bg-dark-950/40 border p-4 rounded-xl group transition-all cursor-default ${isProjected ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30 hover:bg-white/5'}`}>
+                        <div 
+                          key={i} 
+                          onClick={() => projectStoredVerse(v)}
+                          onDoubleClick={() => removeFromQueue(i)}
+                          className={`bg-dark-950/40 border p-4 rounded-xl group transition-all cursor-pointer select-none ${isProjected ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30 hover:bg-white/5'}`}
+                          title="Tap to Project, Double Tap to Remove"
+                        >
                           <div className="flex justify-between items-center mb-2">
                             <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isProjected ? 'text-gold' : 'text-gold/60'}`}>{v.reference}</span>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                               <button onClick={() => toggleProjectVerse(v)} className={`p-1.5 rounded-lg transition-all ${isProjected ? 'bg-gold text-dark-950' : 'hover:bg-forest/20 text-forest-light'}`} title={isProjected ? "Clear Projection" : "Project"}>
-                                 {isProjected ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
-                               </button>
-                               <button onClick={() => removeFromQueue(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400" title="Delete"><Trash2 className="w-4 h-4"/></button>
+                            <div className="flex gap-1">
+                               <div className={`p-1.5 rounded-lg transition-all ${isProjected ? 'bg-gold text-dark-950' : 'text-cream/20 group-hover:text-gold/40'}`}>
+                                 {isProjected ? <Eye className="w-4 h-4"/> : <div className="w-4 h-4" />}
+                               </div>
                             </div>
                           </div>
                           <p className={`text-sm leading-relaxed ${isProjected ? 'text-cream font-bold' : 'text-cream/70 line-clamp-2'}`}>{v.text}</p>

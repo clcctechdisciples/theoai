@@ -15,45 +15,71 @@ export async function POST(req: Request) {
       throw new Error("AI API Key missing")
     }
 
-    const prompt = `You are a music library assistant. Analyze the following text which contains a list of songs and their lyrics.
+    const prompt = `You are a professional music librarian for a church. Analyze the following text which contains a list of songs, setlists, or raw lyrics.
     
     TASK:
-    - Extract each song individually.
-    - For each song, provide a "title" and "lyrics" (the full text).
-    - Return a JSON array of objects.
-
-    Content:
-    "${content}"
-
-    Respond ONLY with a JSON array:
+    1. EXTRACT: Find each individual song in the text.
+    2. IDENTIFY: Determine the correct title for each song.
+    3. CLEAN: Provide the full, clean lyrics. Remove any chord notations (e.g., [C], G7, Am), speaker names (e.g., "Pastor:"), or irrelevant metadata.
+    4. STRUCTURE: Break the lyrics into logical verses/choruses if possible, separated by single newlines.
+    
+    Return a JSON array of objects. Respond ONLY with the JSON array.
+    
+    Format:
     [
       { "title": "Song Title", "lyrics": "Full lyrics text..." },
       ...
-    ]`
+    ]
+
+    Content to process:
+    "${content}"`
 
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://clcctheoai.vercel.app',
+        'X-Title': 'Theo AI'
       },
       body: JSON.stringify({
         model: 'google/gemini-flash-1.5',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' }
+        messages: [{ role: 'system', content: 'You are a professional music librarian. Your task is to analyze text files containing song lists or lyrics and extract them into a clean JSON format.' }, { role: 'user', content: prompt }],
       })
     })
 
     const data = await res.json()
-    const songs = JSON.parse(data.choices[0].message.content)
+    
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('OpenRouter Error Data:', data)
+      throw new Error(data.error?.message || "AI failed to process the request")
+    }
+
+    let rawContent = data.choices[0].message.content.trim()
+    if (rawContent.startsWith('```')) {
+      rawContent = rawContent.replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim()
+    }
+
+    let songs = []
+    try {
+      songs = JSON.parse(rawContent)
+      // Sometimes AI wraps it in an object like { "songs": [...] }
+      if (!Array.isArray(songs) && songs.songs) songs = songs.songs
+    } catch (e) {
+      console.error('Failed to parse AI JSON:', rawContent)
+      throw new Error("AI returned invalid JSON. Please try a smaller batch.")
+    }
 
     if (Array.isArray(songs)) {
       for (const song of songs) {
-        saveData((session.user as any).id, 'songs', song)
+        if (song.title && song.lyrics) {
+          await saveData((session.user as any).id, 'songs', song)
+        }
       }
+      return NextResponse.json({ success: true, count: songs.length })
     }
 
-    return NextResponse.json({ success: true, count: songs.length })
+    return NextResponse.json({ success: false, error: 'No songs found in the processed text.' })
   } catch (error: any) {
     console.error('Bulk Upload Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

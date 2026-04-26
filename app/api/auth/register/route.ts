@@ -10,13 +10,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
-    const users = getUsers()
+    const users = await getUsers()
     if (users.find((u: any) => u.username === username)) {
       return NextResponse.json({ error: 'Username already exists' }, { status: 409 })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-    addUser({ 
+    await addUser({ 
       id: Date.now().toString(), 
       username, 
       password: hashedPassword,

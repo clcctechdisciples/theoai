@@ -28,7 +28,7 @@ export const authOptions: NextAuthOptions = {
         // Check local DB (Dynamic import to avoid Edge Runtime issues with 'fs')
         try {
           const { getUsers } = await import('./db')
-          const users = getUsers()
+          const users = await getUsers()
           const user = users.find((u: any) => u.username === credentials.username)
           if (user) {
             const bcrypt = await import('bcryptjs')

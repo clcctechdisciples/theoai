@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
-import { Edit2, Save, FolderOpen, ChevronLeft, ChevronRight, FileUp } from 'lucide-react'
+import { Edit2, Save, FolderOpen, ChevronLeft, ChevronRight, FileUp, Search, Pin, Plus, X } from 'lucide-react'
 
 export default function WorshipPage() {
   const [globalState, setGlobalState] = useState({ mode: 'idle', lyricLines: [] as string[], lyricSection: '' })
@@ -14,6 +14,8 @@ export default function WorshipPage() {
   const [library, setLibrary] = useState<any[]>([])
   const [showLibrary, setShowLibrary] = useState(false)
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [songQueue, setSongQueue] = useState<any[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : [])).catch(() => {})
@@ -160,20 +162,89 @@ export default function WorshipPage() {
 
           {/* Song Library */}
           {showLibrary && (
-            <div className="glass-card mb-6 p-6 rounded-2xl border border-gold/30 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {library.map(song => (
-                <div
-                  key={song.id}
-                  className="bg-dark border border-forest/20 p-4 rounded-xl hover:border-gold/50 cursor-pointer transition-all"
-                  onClick={() => { setSongTitle(song.title); setMasterText(song.lyrics?.[0] || ''); setShowLibrary(false) }}
-                >
-                  <h3 className="font-bold text-cream text-sm truncate">{song.title}</h3>
-                  <span className="text-[10px] uppercase text-gold-light mt-1 block">Saved Song</span>
-                </div>
-              ))}
-              {library.length === 0 && <p className="text-sm text-cream/50 col-span-full">No songs saved yet.</p>}
+            <div className="glass-card mb-6 p-6 rounded-2xl border border-gold/30">
+              <div className="flex items-center gap-3 mb-4 bg-dark/50 border border-forest/30 rounded-xl px-4 py-2">
+                <Search className="w-4 h-4 text-gold/50" />
+                <input 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  placeholder="Search your library..."
+                  className="bg-transparent border-none text-cream focus:outline-none w-full text-sm font-medium"
+                />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                {library
+                  .filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map(song => (
+                  <div
+                    key={song.id}
+                    className="group bg-dark border border-forest/20 p-4 rounded-xl hover:border-gold/50 cursor-pointer transition-all relative overflow-hidden"
+                    onClick={() => { setSongTitle(song.title); setMasterText(song.lyrics?.[0] || ''); setShowLibrary(false) }}
+                  >
+                    <h3 className="font-bold text-cream text-sm truncate pr-6">{song.title}</h3>
+                    <span className="text-[10px] uppercase text-gold-light mt-1 block">Saved Song</span>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!songQueue.find(q => q.id === song.id)) {
+                          setSongQueue([...songQueue, song]);
+                        }
+                      }}
+                      className="absolute top-2 right-2 p-1.5 bg-forest/20 border border-forest/30 rounded-lg text-gold opacity-0 group-hover:opacity-100 transition-all hover:bg-gold hover:text-dark-950"
+                      title="Add to Sunday Queue"
+                    >
+                      <Pin className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {library.length === 0 && <p className="text-sm text-cream/50 col-span-full py-10 text-center">No songs saved yet.</p>}
+                {library.length > 0 && library.filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                  <p className="text-sm text-cream/50 col-span-full py-10 text-center">No matches found for "{searchTerm}"</p>
+                )}
+              </div>
             </div>
           )}
+
+          {/* Song Queue (Sunday Setlist) */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cream/40 flex items-center gap-2">
+                <Plus className="w-3 h-3 text-gold" /> Sunday Song Queue
+              </h2>
+              <span className="text-[10px] font-black text-gold bg-gold/10 px-3 py-1 rounded-full border border-gold/20">{songQueue.length} Selected</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {songQueue.map((song, idx) => (
+                <div 
+                  key={song.id}
+                  className="flex items-center gap-3 bg-forest-dark/40 border border-gold/20 pl-4 pr-2 py-2 rounded-xl hover:border-gold transition-all cursor-pointer group"
+                  onClick={() => { setSongTitle(song.title); setMasterText(song.lyrics?.[0] || '') }}
+                >
+                  <span className="text-[10px] font-black text-gold/40">{idx + 1}</span>
+                  <span className="text-sm font-bold text-cream truncate max-w-[150px]">{song.title}</span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSongQueue(songQueue.filter(q => q.id !== song.id));
+                    }}
+                    className="p-1 hover:bg-red-500/20 rounded-md text-cream/20 hover:text-red-400 transition-all"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {songQueue.length === 0 && (
+                <button 
+                  onClick={() => setShowLibrary(true)}
+                  className="border border-dashed border-cream/20 hover:border-gold/50 rounded-xl px-6 py-4 flex flex-col items-center justify-center gap-1 group transition-all w-full sm:w-48"
+                >
+                  <Plus className="w-4 h-4 text-cream/20 group-hover:text-gold transition-colors" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-cream/20 group-hover:text-cream/50">Add Song to Setlist</span>
+                </button>
+              )}
+            </div>
+          </div>
 
           <AudioEngine mode="worship" onTranscript={handleTranscript} />
 
