@@ -22,7 +22,8 @@ export async function POST(req: Request) {
         
         if (res.ok) {
           const result = await res.json()
-          const songs = result.songs || result || [] // Handle both formats
+          console.log('AI Backend success:', result)
+          const songs = result.songs || result || [] 
           if (Array.isArray(songs)) {
             for (const song of songs) {
               if (song.title && song.lyrics) {
@@ -31,10 +32,14 @@ export async function POST(req: Request) {
             }
             return NextResponse.json({ success: true, count: songs.length })
           }
+        } else {
+          const errText = await res.text()
+          console.error(`AI Backend failed (${res.status}): ${errText}`)
         }
       } catch (e) { console.error('HF Backend bulk-songs error:', e) }
     }
 
+    console.log('Falling back to OpenRouter for bulk song processing...')
     const apiKey = process.env.OPENROUTER_API_KEY
     if (!apiKey) throw new Error("AI Backend and API Key missing")
 
@@ -66,7 +71,7 @@ export async function POST(req: Request) {
         'X-Title': 'Theo AI'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free', // High speed and available
+        model: 'google/gemini-flash-1.5', 
         messages: [{ role: 'system', content: 'You are a professional music librarian.' }, { role: 'user', content: prompt }],
       })
     })

@@ -90,7 +90,7 @@ export default function SermonPage() {
           setDetectedScripture(ref)
           setScriptureToast(ref)
           setTimeout(() => setScriptureToast(null), 5000)
-          fetch(`/api/bible?ref=${encodeURIComponent(ref)}`)
+          fetch(`/api/bible?ref=${encodeURIComponent(ref)}&translation=${bibleVersion}`)
             .then(r => r.json())
             .then(d => {
               if (d.reference && d.text) {

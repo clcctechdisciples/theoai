@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Music, MessageSquare, Settings, LogOut, UploadCloud, Monitor, Maximize, LayoutDashboard, History, MonitorPlay, ChevronDown, Presentation, X } from 'lucide-react'
+import { Music, MessageSquare, Settings, LogOut, UploadCloud, Monitor, Maximize, LayoutDashboard, History, MonitorPlay, ChevronDown, Presentation, X, Trash2 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { useState, useRef, useEffect } from 'react'
 
@@ -277,9 +277,10 @@ export function Sidebar() {
                       <img src={bg.url} alt="" className="w-full h-full object-cover" />
                       <button 
                         onClick={(e) => removeBackground(bg.id, e)}
-                        className="absolute top-0.5 right-0.5 bg-black/60 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-0 right-0 bg-red-500/80 hover:bg-red-500 text-white p-1.5 opacity-0 group-hover:opacity-100 transition-all rounded-bl-lg"
+                        title="Remove Background"
                       >
-                        <X className="w-2.5 h-2.5 text-red-400" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
