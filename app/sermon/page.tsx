@@ -19,6 +19,7 @@ export default function SermonPage() {
   const [bibleQueue, setBibleQueue] = useState<{ reference: string, text: string }[]>([])
   const [bibleVersion, setBibleVersion] = useState('kjv')
   const [chapterVerses, setChapterVerses] = useState<{ reference: string, verses: { verse: number, text: string }[] } | null>(null)
+  const [selectedChapterVerse, setSelectedChapterVerse] = useState<{ verse: number, text: string } | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('theoai_bible_queue')
@@ -118,8 +119,8 @@ export default function SermonPage() {
         setChapterVerses(data)
         setSearchQuery('')
       } else if (data.reference && data.text) {
-        const newVerse = { reference: data.reference, text: data.text }
-        if (!bibleQueue.some(v => v.reference === data.reference)) {
+        const newVerse = { reference: `${data.reference} (${bibleVersion.toUpperCase()})`, text: data.text }
+        if (!bibleQueue.some(v => v.reference === newVerse.reference)) {
           saveQueue([newVerse, ...bibleQueue])
         }
         projectStoredVerse(newVerse)
@@ -300,27 +301,62 @@ export default function SermonPage() {
                   </div>
                   
                   {chapterVerses && (
-                    <div className="bg-forest-950/50 border border-gold/30 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-gold">{chapterVerses.reference} Verses</h3>
-                        <button onClick={() => setChapterVerses(null)} className="text-[10px] font-black uppercase text-cream/40 hover:text-cream">Close</button>
+                    <div className="bg-forest-950/50 border border-gold/30 rounded-2xl overflow-hidden flex flex-row h-[300px] animate-in fade-in slide-in-from-top-2 duration-300">
+                      {/* Left: Numbers */}
+                      <div className="w-full md:w-1/3 p-4 border-b md:border-b-0 md:border-r border-gold/10 flex flex-col">
+                        <div className="flex justify-between items-center mb-3">
+                          <h3 className="text-[10px] font-black uppercase tracking-widest text-gold">{chapterVerses.reference}</h3>
+                          <button onClick={() => setChapterVerses(null)} className="text-[10px] font-black uppercase text-cream/40 hover:text-cream md:hidden">Close</button>
+                        </div>
+                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
+                          {chapterVerses.verses.map((v, i) => {
+                            const isSelected = selectedChapterVerse?.verse === v.verse
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => setSelectedChapterVerse(v)}
+                                className={`aspect-square flex items-center justify-center border rounded-lg text-[10px] font-bold transition-all ${isSelected ? 'bg-gold text-dark-950 border-gold' : 'bg-dark-900 border-white/5 text-cream/60 hover:bg-gold/20 hover:text-gold'}`}
+                              >
+                                {v.verse}
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-5 sm:grid-cols-8 gap-2 max-h-[120px] overflow-y-auto custom-scrollbar pr-1">
-                        {chapterVerses.verses.map((v, i) => (
-                          <button
-                            key={i}
-                            onClick={() => {
-                              const newVerse = { reference: `${chapterVerses.reference}:${v.verse}`, text: v.text }
-                              if (!bibleQueue.some(q => q.reference === newVerse.reference)) {
-                                saveQueue([newVerse, ...bibleQueue])
-                              }
-                              projectStoredVerse(newVerse)
-                            }}
-                            className="aspect-square flex items-center justify-center bg-dark-900 border border-white/5 rounded-lg text-xs font-bold text-cream/60 hover:bg-gold hover:text-dark-950 transition-all"
-                          >
-                            {v.verse}
-                          </button>
-                        ))}
+                      
+                      {/* Right: Bible Box */}
+                      <div className="w-full md:w-2/3 p-4 bg-dark/20 flex flex-col relative">
+                        <div className="hidden md:block absolute top-4 right-4">
+                          <button onClick={() => setChapterVerses(null)} className="text-cream/20 hover:text-cream"><X className="w-4 h-4"/></button>
+                        </div>
+                        <div className="flex flex-col h-full">
+                           <div className="text-[8px] font-black uppercase tracking-widest text-gold/30 mb-3">Bible Box Preview</div>
+                           {selectedChapterVerse ? (
+                             <div className="flex-1 flex flex-col justify-center animate-fade-in">
+                               <p className="text-sm text-cream font-bold leading-relaxed mb-4 line-clamp-4 italic">"{selectedChapterVerse.text}"</p>
+                               <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+                                 <span className="text-[9px] font-black text-gold uppercase tracking-widest">{chapterVerses.reference}:{selectedChapterVerse.verse}</span>
+                                 <button 
+                                   onClick={() => {
+                                     const newVerse = { reference: `${chapterVerses.reference}:${selectedChapterVerse.verse} (${bibleVersion.toUpperCase()})`, text: selectedChapterVerse.text }
+                                     if (!bibleQueue.some(q => q.reference === newVerse.reference)) {
+                                       saveQueue([newVerse, ...bibleQueue])
+                                     }
+                                     projectStoredVerse(newVerse)
+                                   }}
+                                   className="bg-gold text-dark-950 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:brightness-110 transition-all"
+                                 >
+                                   Project
+                                 </button>
+                               </div>
+                             </div>
+                           ) : (
+                             <div className="flex-1 flex flex-col items-center justify-center opacity-20">
+                               <Search className="w-8 h-8 mb-2" />
+                               <p className="text-[8px] font-black uppercase tracking-widest">Select Verse</p>
+                             </div>
+                           )}
+                        </div>
                       </div>
                     </div>
                   )}

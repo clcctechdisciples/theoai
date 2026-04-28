@@ -21,6 +21,7 @@ model User {
   songs            Song[]
   backgrounds      Background[]
   recordings       Recording[]
+  slides           Slide[]
   settings         Settings?
 }
 
@@ -66,4 +67,15 @@ model Settings {
   user             User    @relation(fields: [userId], references: [id])
   defaultBgUrl     String? @db.Text
   bibleTranslation String  @default("kjv")
+}
+
+model Slide {
+  id        String   @id @default(cuid())
+  title     String
+  url       String   @db.Text // Store as data URI for simplicity on Vercel
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

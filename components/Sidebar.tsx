@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Music, MessageSquare, Settings, LogOut, UploadCloud, Monitor, Maximize, LayoutDashboard, History, MonitorPlay, ChevronDown, Presentation } from 'lucide-react'
+import { Music, MessageSquare, Settings, LogOut, UploadCloud, Monitor, Maximize, LayoutDashboard, History, MonitorPlay, ChevronDown, Presentation, X } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { useState, useRef, useEffect } from 'react'
 
@@ -9,7 +9,6 @@ const navItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Worship Engine', href: '/worship', icon: Music },
   { label: 'Sermon Engine', href: '/sermon', icon: MessageSquare },
-  { label: 'Live Projection', href: '/display', icon: MonitorPlay },
   { label: 'Slides Display', href: '/slides', icon: Presentation },
   { label: 'Audio Engine', href: '/audio-engine', icon: Settings },
   { label: 'Audio Archive', href: '/audio', icon: History },
@@ -159,110 +158,142 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto pb-4">
-        {/* Nav Links — all 5 */}
+        {/* Nav Links */}
         {navItems.map(item => {
           const isActive = pathname === item.href
           const Icon = item.icon
-          const isAudioArchive = item.label === 'Audio Archive'
           
           return (
-            <div key={item.href} className="space-y-1">
-              <Link href={item.href}>
-                <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                  isActive
-                    ? 'bg-cream/10 border border-cream/15 text-cream'
-                    : 'text-cream/40 hover:bg-white/5 hover:text-cream/80'
-                }`}>
-                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-gold' : ''}`} />
-                  <span className="font-semibold text-sm tracking-tight">{item.label}</span>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group ${
+                isActive 
+                  ? 'bg-gold/10 text-gold shadow-[inset_0_0_12px_rgba(201,168,76,0.1)] border border-gold/20' 
+                  : 'text-cream/40 hover:bg-white/5 hover:text-cream'
+              }`}
+            >
+              <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-gold' : ''}`} />
+              <span className={`font-semibold text-sm tracking-tight ${isActive ? 'font-bold' : ''}`}>{item.label}</span>
+            </Link>
+          )
+        })}
+
+        {/* ─── Live Projection (Independent) ─── */}
+        <div className="mt-4 mx-4 bg-dark-900/50 rounded-2xl border border-forest-700/20 p-4">
+          <button
+            onClick={() => setShowProjection(!showProjection)}
+            className="w-full flex items-center justify-between mb-3 text-cream/40 hover:text-cream/80 transition-all"
+          >
+            <span className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest">
+              <MonitorPlay className={`w-4 h-4 shrink-0 ${showProjection ? 'text-gold' : ''}`} />
+              Live Projection
+            </span>
+            <ChevronDown className={`w-3 h-3 transition-transform ${showProjection ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showProjection && (
+            <div className="space-y-4 pr-1">
+              {/* Mini 16:9 Preview */}
+              <div className="w-full bg-black rounded-xl border border-white/5 overflow-hidden relative" style={{ aspectRatio: '16/9' }}>
+                {projState.backgroundUrl && (
+                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${projState.backgroundUrl})` }}>
+                    <div className="absolute inset-0 bg-black/40" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b from-forest-700/30 to-black pointer-events-none" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
+                  {projState.mode === 'worship' && projState.lyricLines?.length > 0 ? (
+                    <div>{projState.lyricLines.map((l: string, i: number) => <p key={i} className="text-[9px] font-bold text-white">{l}</p>)}</div>
+                  ) : projState.mode === 'scripture' && projState.scripture ? (
+                    <div>
+                      <p className="text-[8px] text-white/80 line-clamp-2">{projState.scripture.text}</p>
+                      <p className="text-[8px] font-black text-gold uppercase mt-1">{projState.scripture.reference}</p>
+                    </div>
+                  ) : (
+                    <p className="text-[8px] text-cream/20 font-black uppercase tracking-widest">System Idle</p>
+                  )}
                 </div>
-              </Link>
+                <div className="absolute top-1.5 right-1.5">
+                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase ${currentMode === 'idle' ? 'bg-white/10 text-cream/40' : 'bg-red-500/20 text-red-400 animate-pulse'}`}>{currentMode}</span>
+                </div>
+              </div>
 
-              {/* ─── Live Projection (Now under Audio Archive) ─── */}
-              {isAudioArchive && (
-                <div className="mt-2 ml-4 border-l border-forest-700/20 pl-4 pb-2">
-                  <button
-                    onClick={() => setShowProjection(!showProjection)}
-                    className="w-full flex items-center justify-between py-2 text-cream/40 hover:text-cream/80 transition-all"
-                  >
-                    <span className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest">
-                      <MonitorPlay className={`w-4 h-4 shrink-0 ${showProjection ? 'text-gold' : ''}`} />
-                      Live Projection
-                    </span>
-                    <ChevronDown className={`w-3 h-3 transition-transform ${showProjection ? 'rotate-180' : ''}`} />
-                  </button>
+              {/* Display Detection */}
+              <button
+                onClick={detectDisplays}
+                className="w-full py-2 bg-forest/20 border border-forest/30 hover:bg-forest/40 text-cream text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 transition-all"
+              >
+                <Monitor className="w-3 h-3 text-gold" /> Detect Displays
+              </button>
 
-                  {showProjection && (
-                    <div className="mt-2 space-y-3 pr-2">
-                      {/* Mini 16:9 Preview */}
-                      <div className="w-full bg-black rounded-xl border border-white/5 overflow-hidden relative" style={{ aspectRatio: '16/9' }}>
-                        {projState.backgroundUrl && (
-                          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${projState.backgroundUrl})` }}>
-                            <div className="absolute inset-0 bg-black/40" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-b from-forest-700/30 to-black pointer-events-none" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
-                          {projState.mode === 'worship' && projState.lyricLines?.length > 0 ? (
-                            <div>{projState.lyricLines.map((l: string, i: number) => <p key={i} className="text-[9px] font-bold text-white">{l}</p>)}</div>
-                          ) : projState.mode === 'scripture' && projState.scripture ? (
-                            <div>
-                              <p className="text-[8px] text-white/80 line-clamp-2">{projState.scripture.text}</p>
-                              <p className="text-[8px] font-black text-gold uppercase mt-1">{projState.scripture.reference}</p>
-                            </div>
-                          ) : (
-                            <p className="text-[8px] text-cream/20 font-black uppercase tracking-widest">System Idle</p>
-                          )}
-                        </div>
-                        <div className="absolute top-1.5 right-1.5">
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase ${currentMode === 'idle' ? 'bg-white/10 text-cream/40' : 'bg-red-500/20 text-red-400 animate-pulse'}`}>{currentMode}</span>
-                        </div>
-                      </div>
-
-                      {/* Display Detection */}
+              {screens.length > 0 && (
+                <div className="space-y-1">
+                  {screens.map((screen, i) => {
+                    const isId = screen.id || screen.label || `Display ${i + 1}`
+                    const isActive = activeScreenId === isId
+                    return (
                       <button
-                        onClick={detectDisplays}
-                        className="w-full py-2 bg-forest/20 border border-forest/30 hover:bg-forest/40 text-cream text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                        key={isId}
+                        onClick={() => projectOnScreen(screen)}
+                        className={`w-full py-2 px-2 border rounded-lg text-[9px] font-bold flex items-center justify-between transition-all ${
+                          isActive 
+                            ? 'bg-gold/10 border-gold text-gold shadow-[0_0_10px_rgba(201,168,76,0.15)]' 
+                            : 'bg-cream/5 border-cream/10 hover:border-gold/40 hover:bg-cream/10 text-cream'
+                        }`}
                       >
-                        <Monitor className="w-3 h-3 text-gold" /> Detect Displays
+                        <span className="flex items-center gap-1.5 truncate">
+                          <Monitor className={`w-3 h-3 ${isActive ? 'text-gold' : 'text-gold/40'}`} />
+                          {screen.label || `Display ${i + 1}`}
+                        </span>
+                        {isActive ? (
+                          <span className="text-[7px] bg-gold text-dark-950 px-1 py-0.5 rounded-full font-black uppercase">Active</span>
+                        ) : (
+                          <Maximize className="w-2.5 h-2.5 text-cream/40" />
+                        )}
                       </button>
+                    )
+                  })}
+                </div>
+              )}
 
-                      {screens.length > 0 && (
-                        <div className="space-y-1">
-                          {screens.map((screen, i) => {
-                            const isId = screen.id || screen.label || `Display ${i + 1}`
-                            const isActive = activeScreenId === isId
-                            return (
-                              <button
-                                key={isId}
-                                onClick={() => projectOnScreen(screen)}
-                                className={`w-full py-2 px-2 border rounded-lg text-[9px] font-bold flex items-center justify-between transition-all ${
-                                  isActive 
-                                    ? 'bg-gold/10 border-gold text-gold shadow-[0_0_10px_rgba(201,168,76,0.15)]' 
-                                    : 'bg-cream/5 border-cream/10 hover:border-gold/40 hover:bg-cream/10 text-cream'
-                                }`}
-                              >
-                                <span className="flex items-center gap-1.5 truncate">
-                                  <Monitor className={`w-3 h-3 ${isActive ? 'text-gold' : 'text-gold/40'}`} />
-                                  {screen.label || `Display ${i + 1}`}
-                                </span>
-                                {isActive ? (
-                                  <span className="text-[7px] bg-gold text-dark-950 px-1 py-0.5 rounded-full font-black uppercase">Active</span>
-                                ) : (
-                                  <Maximize className="w-2.5 h-2.5 text-cream/40" />
-                                )}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      )}
+              {/* Background Selection */}
+              <div className="mt-4 pt-4 border-t border-forest-700/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-cream/40">Backgrounds</span>
+                  <label className="cursor-pointer text-gold hover:text-white transition-colors">
+                    <UploadCloud className="w-4 h-4" />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                  </label>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                  {backgrounds.map((bg) => (
+                    <div 
+                      key={bg.id} 
+                      onClick={() => handleSetBackground(bg.url)}
+                      className={`group relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${backgroundUrl === bg.url ? 'border-gold shadow-[0_0_8px_rgba(201,168,76,0.5)]' : 'border-transparent hover:border-white/20'}`}
+                    >
+                      <img src={bg.url} alt="" className="w-full h-full object-cover" />
+                      <button 
+                        onClick={(e) => removeBackground(bg.id, e)}
+                        className="absolute top-0.5 right-0.5 bg-black/60 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-2.5 h-2.5 text-red-400" />
+                      </button>
+                    </div>
+                  ))}
+                  {backgrounds.length === 0 && (
+                    <div className="col-span-4 py-4 text-center border border-dashed border-white/5 rounded-lg">
+                      <p className="text-[8px] font-black uppercase text-cream/10 tracking-widest">No Backgrounds</p>
                     </div>
                   )}
                 </div>
-              )}
+              </div>
             </div>
-          )
-        })}
+          )}
+        </div>
+
         
         {/* ─── Backgrounds (Global) ─── */}
 

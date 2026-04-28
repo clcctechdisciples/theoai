@@ -19,6 +19,7 @@ export default function WorshipPage() {
   const [bibleSearch, setBibleSearch] = useState('')
   const [bibleVersion, setBibleVersion] = useState('kjv')
   const [chapterVerses, setChapterVerses] = useState<{ reference: string, verses: { verse: number, text: string }[] } | null>(null)
+  const [selectedChapterVerse, setSelectedChapterVerse] = useState<{ verse: number, text: string } | null>(null)
 
   const searchBible = async () => {
     if (!bibleSearch.trim()) return
@@ -32,7 +33,7 @@ export default function WorshipPage() {
       } else if (data.reference && data.text) {
         await fetch('/api/control', {
           method: 'POST',
-          body: JSON.stringify({ action: 'setScripture', scripture: { reference: data.reference, text: data.text } })
+          body: JSON.stringify({ action: 'setScripture', scripture: { reference: `${data.reference} (${bibleVersion.toUpperCase()})`, text: data.text } })
         })
         setBibleSearch('')
       }
@@ -155,29 +156,7 @@ export default function WorshipPage() {
           <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <h1 className="text-4xl font-cinzel font-black tracking-tighter text-cream uppercase shrink-0">Worship</h1>
             
-            {/* Quick Bible Search */}
-            <div className="flex-1 max-w-xl flex items-center gap-2 bg-dark/50 border border-forest/30 rounded-full px-4 py-1.5 ml-0 md:ml-4">
-              <select 
-                value={bibleVersion}
-                onChange={e => setBibleVersion(e.target.value)}
-                className="bg-transparent border-none text-[10px] font-black text-gold uppercase tracking-widest focus:outline-none cursor-pointer"
-              >
-                <option value="kjv" className="bg-dark">KJV</option>
-                <option value="nlt" className="bg-dark">NLT</option>
-                <option value="niv" className="bg-dark">NIV</option>
-                <option value="amp" className="bg-dark">AMP</option>
-              </select>
-              <div className="w-[1px] h-4 bg-white/10 mx-1" />
-              <Search className="w-3.5 h-3.5 text-cream/30" />
-              <input 
-                value={bibleSearch}
-                onChange={e => setBibleSearch(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && searchBible()}
-                placeholder="Quick Scripture (e.g. John 3:16)"
-                className="bg-transparent border-none text-xs text-cream focus:outline-none w-full font-medium"
-              />
-              <button onClick={searchBible} className="text-[10px] font-black uppercase text-gold hover:text-white transition-colors">Search</button>
-            </div>
+            <div className="flex-1" /> {/* Spacer */}
 
             <div className="flex items-center gap-3 shrink-0">
 
@@ -210,26 +189,61 @@ export default function WorshipPage() {
 
           {/* Chapter Verse Selection */}
           {chapterVerses && (
-            <div className="glass-card mb-6 p-6 rounded-2xl border border-gold/30 bg-forest-950/50">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gold">{chapterVerses.reference} — Select Verse to Project</h3>
-                <button onClick={() => setChapterVerses(null)} className="text-[10px] font-black uppercase text-cream/40 hover:text-cream"><X className="w-4 h-4"/></button>
+            <div className="glass-card mb-6 p-0 rounded-2xl border border-gold/30 bg-forest-950/50 overflow-hidden flex flex-col md:flex-row h-[350px]">
+              {/* Left Side: Verse Selection */}
+              <div className="w-full md:w-1/3 p-6 border-b md:border-b-0 md:border-r border-gold/10 flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gold">{chapterVerses.reference} — Verses</h3>
+                  <button onClick={() => setChapterVerses(null)} className="text-cream/20 hover:text-cream transition-colors md:hidden"><X className="w-4 h-4"/></button>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 overflow-y-auto custom-scrollbar pr-2 flex-1">
+                  {chapterVerses.verses.map((v, i) => {
+                    const isSelected = selectedChapterVerse?.verse === v.verse
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedChapterVerse(v)}
+                        className={`aspect-square flex items-center justify-center border rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95 ${isSelected ? 'bg-gold text-dark-950 border-gold' : 'bg-dark/60 border-white/5 text-cream/60 hover:bg-gold/20 hover:text-gold'}`}
+                      >
+                        {v.verse}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-              <div className="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-12 gap-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-2">
-                {chapterVerses.verses.map((v, i) => (
-                  <button
-                    key={i}
-                    onClick={async () => {
-                      await fetch('/api/control', {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'setScripture', scripture: { reference: `${chapterVerses.reference}:${v.verse}`, text: v.text } })
-                      })
-                    }}
-                    className="aspect-square flex items-center justify-center bg-dark/60 border border-white/5 rounded-xl text-xs font-bold text-cream/60 hover:bg-gold hover:text-dark-950 transition-all hover:scale-110 active:scale-95"
-                  >
-                    {v.verse}
-                  </button>
-                ))}
+
+              {/* Right Side: Verse Preview (Bible Box) */}
+              <div className="w-full md:w-2/3 p-8 bg-dark/20 flex flex-col relative">
+                <div className="hidden md:flex justify-end absolute top-6 right-6">
+                  <button onClick={() => setChapterVerses(null)} className="text-cream/20 hover:text-cream transition-colors"><X className="w-5 h-5"/></button>
+                </div>
+                <div className="flex flex-col h-full">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gold/40 mb-6">Bible Box — Preview</div>
+                  {selectedChapterVerse ? (
+                    <div className="flex-1 flex flex-col justify-center animate-fade-in">
+                      <p className="text-2xl text-cream font-bold leading-relaxed mb-8 italic">"{selectedChapterVerse.text}"</p>
+                      <div className="flex items-center justify-between border-t border-white/5 pt-6">
+                        <span className="text-xs font-black text-gold uppercase tracking-[0.2em]">{chapterVerses.reference}:{selectedChapterVerse.verse} ({bibleVersion.toUpperCase()})</span>
+                        <button 
+                          onClick={async () => {
+                            await fetch('/api/control', {
+                              method: 'POST',
+                              body: JSON.stringify({ action: 'setScripture', scripture: { reference: `${chapterVerses.reference}:${selectedChapterVerse.verse} (${bibleVersion.toUpperCase()})`, text: selectedChapterVerse.text } })
+                            })
+                          }}
+                          className="bg-gold text-dark-950 px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-gold/10"
+                        >
+                          Project Scripture
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center opacity-20">
+                      <Search className="w-12 h-12 mb-4" />
+                      <p className="text-xs font-black uppercase tracking-widest">Select a verse to preview</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

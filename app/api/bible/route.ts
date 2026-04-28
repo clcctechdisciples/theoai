@@ -23,7 +23,7 @@ export async function GET(req: Request) {
           'X-Title': 'Theo AI'
         },
         body: JSON.stringify({
-          model: 'google/gemini-pro-1.5', // Using Pro for better accuracy with verse lists
+          model: 'google/gemini-2.0-flash-exp:free', // High speed and accurate for verse lists
           messages: [
             { role: 'system', content: 'You are a Bible scholar. Provide the text for the requested reference. If it is a chapter, provide a list of verses.' },
             { role: 'user', content: `Provide the text for "${ref}" in the ${translation.toUpperCase()} translation. 

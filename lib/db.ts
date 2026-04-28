@@ -77,6 +77,14 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
         })
       }
     }
+  } else if (key === 'slides') {
+    return await prisma.slide.create({
+      data: {
+        title: value.title,
+        url: value.url,
+        userId: userId
+      }
+    })
   }
 }
 

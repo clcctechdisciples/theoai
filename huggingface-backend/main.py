@@ -94,6 +94,67 @@ Extract and generate the following in cleanly formatted markdown:
     ]
     return {"summary": get_ai_response(api_messages)}
 
+class BulkSongsRequest(BaseModel):
+    content: str
+
+@app.post("/api/bulk-songs")
+def bulk_songs(req: BulkSongsRequest):
+    system_prompt = """You are a professional music librarian for a church. Analyze the following text which contains a list of songs, setlists, or raw lyrics.
+    TASK:
+    1. EXTRACT: Find each individual song in the text.
+    2. IDENTIFY: Determine the correct title for each song.
+    3. CLEAN: Provide the full, clean lyrics. Remove chord notations or irrelevant metadata.
+    4. STRUCTURE: Break the lyrics into logical verses/choruses.
+    Return a JSON array of objects: [{"title": "...", "lyrics": "..."}]"""
+    
+    api_messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": req.content}
+    ]
+    res = get_ai_response(api_messages)
+    # Basic cleanup in case AI returns markdown blocks
+    if "```json" in res:
+        res = res.split("```json")[1].split("```")[0]
+    elif "```" in res:
+        res = res.split("```")[1].split("```")[0]
+    
+    import json
+    try:
+        songs = json.loads(res.strip())
+        return {"songs": songs}
+    except:
+        return {"songs": [], "raw": res}
+
+class AIProcessRequest(BaseModel):
+    transcript: str
+    mode: str
+
+@app.post("/api/ai-process")
+def ai_process(req: AIProcessRequest):
+    system_prompt = f"""You are an elite AI church media assistant. 
+    ANALYSIS MODE: {req.mode.upper()}
+    TASK:
+    1. SCRIPTURE: Identify quoted Bible verses.
+    2. LYRICS: If worship music is detected, extract clean lyrics (2-4 lines).
+    3. REJECTION: If general speech, return type "none".
+    Respond ONLY with JSON: {{"type": "scripture"|"lyrics"|"none", "content": {{"reference": "...", "text": "...", "lines": ["..."]}}}}"""
+    
+    api_messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": req.transcript}
+    ]
+    res = get_ai_response(api_messages)
+    if "```json" in res:
+        res = res.split("```json")[1].split("```")[0]
+    elif "```" in res:
+        res = res.split("```")[1].split("```")[0]
+    
+    import json
+    try:
+        return json.loads(res.strip())
+    except:
+        return {"type": "none", "error": "Invalid JSON from AI"}
+
 @app.get("/")
 def health():
     return {"status": "ok", "message": "Theo AI Hugging Face Backend (with Fallback) is running"}

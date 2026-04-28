@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { v4 as uuidv4 } from 'uuid'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { saveData } from '@/lib/db'
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File
@@ -11,34 +14,16 @@ export async function POST(req: Request) {
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+    const base64 = buffer.toString('base64')
+    const dataUri = `data:${file.type};base64,${base64}`
 
-    // Save the file
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'slides')
-    try {
-      await mkdir(uploadDir, { recursive: true })
-    } catch (e) {}
+    // Save to DB
+    const slide = await saveData((session.user as any).id, 'slides' as any, {
+      title: file.name,
+      url: dataUri
+    })
 
-    const filename = `${uuidv4()}-${file.name}`
-    const path = join(uploadDir, filename)
-    await writeFile(path, buffer)
-
-    const publicUrl = `/uploads/slides/${filename}`
-
-    // For a real production app, we would use a library like 'pdf-img-convert' 
-    // to turn PDF pages into images. For now, we will return the PDF as a single "slide"
-    // or a set of slides if we could parse it.
-    
-    // Placeholder: Return a single slide for the uploaded file
-    const slides = [
-      {
-        id: uuidv4(),
-        url: publicUrl,
-        title: file.name,
-        type: file.type
-      }
-    ]
-
-    return NextResponse.json({ success: true, slides })
+    return NextResponse.json({ success: true, slides: [slide] })
   } catch (error: any) {
     console.error('Slide upload error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
