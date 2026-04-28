@@ -40,7 +40,7 @@ export async function getData(userId: string) {
   }
 }
 
-export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'audio', value: any) {
+export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'audio' | 'slides', value: any) {
   if (key === 'songs') {
     // Check if song with same title exists for this user
     const existing = await prisma.song.findFirst({
