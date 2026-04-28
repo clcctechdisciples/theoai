@@ -58,7 +58,7 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'google/gemini-flash-1.5',
+        model: 'google/gemma-3-27b-it:free',
         messages: [{ role: 'user', content: prompt }],
         response_format: { type: 'json_object' }
       })

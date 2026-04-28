@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         'X-Title': 'Theo AI'
       },
       body: JSON.stringify({
-        model: 'google/gemini-flash-1.5', 
+        model: 'google/gemma-3-27b-it:free', 
         messages: [{ role: 'system', content: 'You are a professional music librarian.' }, { role: 'user', content: prompt }],
       })
     })

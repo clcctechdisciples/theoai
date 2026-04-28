@@ -8,7 +8,7 @@ app = FastAPI(title="Theo AI Backend")
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-PRIMARY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
+PRIMARY_MODEL = "google/gemma-3-27b-it:free"
 FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
 
 def call_llm(messages: List[Dict[str, str]], model: str = PRIMARY_MODEL) -> str:
