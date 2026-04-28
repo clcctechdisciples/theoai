@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
-import { FileText, Download, CheckCircle2, FileDown, BookOpen, Search, Plus, Trash2, Maximize, Eye, EyeOff } from 'lucide-react'
+import { FileText, Download, CheckCircle2, FileDown, BookOpen, Search, Plus, Trash2, Maximize, Eye, EyeOff, X } from 'lucide-react'
 import { detectScripture } from '@/lib/scriptureDetector'
 
 export default function SermonPage() {
