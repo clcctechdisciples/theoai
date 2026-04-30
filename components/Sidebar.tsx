@@ -267,20 +267,21 @@ export function Sidebar() {
                   </label>
                 </div>
                 
-                <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                   {backgrounds.map((bg) => (
-                    <div 
-                      key={bg.id} 
-                      onClick={() => handleSetBackground(bg.url)}
-                      className={`group relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${backgroundUrl === bg.url ? 'border-gold shadow-[0_0_8px_rgba(201,168,76,0.5)]' : 'border-transparent hover:border-white/20'}`}
-                    >
-                      <img src={bg.url} alt="" className="w-full h-full object-cover" />
+                    <div key={bg.id} className="flex flex-col gap-1.5 items-center">
+                      <div 
+                        onClick={() => handleSetBackground(bg.url)}
+                        className={`w-full aspect-video rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${backgroundUrl === bg.url ? 'border-gold shadow-[0_0_8px_rgba(201,168,76,0.5)]' : 'border-transparent hover:border-white/20'}`}
+                      >
+                        <img src={bg.url} alt="" className="w-full h-full object-cover" />
+                      </div>
                       <button 
                         onClick={(e) => removeBackground(bg.id, e)}
-                        className="absolute top-0 right-0 bg-red-500/80 hover:bg-red-500 text-white p-1.5 opacity-0 group-hover:opacity-100 transition-all rounded-bl-lg"
+                        className="bg-red-500 border border-gold rounded-full text-white py-0.5 px-3 hover:brightness-110 transition-all flex items-center justify-center opacity-70 hover:opacity-100"
                         title="Remove Background"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   ))}
