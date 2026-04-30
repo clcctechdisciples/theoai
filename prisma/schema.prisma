@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  id               String       @id @default(cuid())
   username         String       @unique
   password         String
   securityQuestion String?
@@ -26,10 +26,10 @@ model User {
 }
 
 model Song {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid())
   title     String
   lyrics    String
-  userId    String   @db.ObjectId
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -38,12 +38,12 @@ model Song {
 }
 
 model Recording {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid())
   title     String
   filename  String
   type      String   // e.g. "sermon", "worship"
   data      Bytes?
-  userId    String   @db.ObjectId
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
@@ -51,10 +51,10 @@ model Recording {
 }
 
 model Background {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid())
   url       String
   isDefault Boolean  @default(false)
-  userId    String   @db.ObjectId
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
@@ -62,18 +62,18 @@ model Background {
 }
 
 model Settings {
-  id               String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String  @unique @db.ObjectId
+  id               String  @id @default(cuid())
+  userId           String  @unique
   user             User    @relation(fields: [userId], references: [id])
   defaultBgUrl     String?
   bibleTranslation String  @default("kjv")
 }
 
 model Slide {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid())
   title     String
   url       String   // Store as data URI for simplicity on Vercel
-  userId    String   @db.ObjectId
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
