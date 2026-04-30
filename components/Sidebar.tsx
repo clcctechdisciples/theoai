@@ -122,6 +122,10 @@ export function Sidebar() {
   }
 
   const detectDisplays = async () => {
+    if (screens.length > 0) {
+      setScreens([])
+      return
+    }
     if (!('getScreenDetails' in window)) return alert('Window Management API not supported. Use Chrome 100+ on desktop.')
     try {
       const details = await (window as any).getScreenDetails()
