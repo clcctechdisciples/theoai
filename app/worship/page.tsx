@@ -140,6 +140,7 @@ export default function WorshipPage() {
     try {
       await fetch('/api/songs', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: songTitle, lyrics: [masterText] })
       })
       fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : []))

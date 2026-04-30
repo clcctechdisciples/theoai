@@ -23,15 +23,13 @@ export async function GET(req: Request) {
           'X-Title': 'Theo AI'
         },
         body: JSON.stringify({
-          model: 'google/gemma-3-27b-it:free', // High speed and accurate for verse lists
+          model: 'google/gemini-pro-1.5', // High speed and accurate for verse lists
           messages: [
-            { role: 'system', content: 'You are a Bible scholar. Provide the text for the requested reference. If it is a chapter, provide a list of verses.' },
+            { role: 'system', content: 'You are a Bible scholar. Provide the text for the requested reference. If it is a chapter, provide a list of verses. Respond ONLY with valid JSON and no markdown formatting.' },
             { role: 'user', content: `Provide the text for "${ref}" in the ${translation.toUpperCase()} translation. 
-            If it is a single verse, respond with: { "reference": "...", "text": "..." }
-            If it is a chapter or range, respond with: { "reference": "...", "verses": [{ "verse": 1, "text": "..." }, ...] }
-            Respond ONLY with valid JSON.` }
-          ],
-          response_format: { type: 'json_object' }
+            If it is a single verse, respond with exactly: { "reference": "...", "text": "..." }
+            If it is a chapter or range, respond with exactly: { "reference": "...", "verses": [{ "verse": 1, "text": "..." }, ...] }` }
+          ]
         })
       })
 

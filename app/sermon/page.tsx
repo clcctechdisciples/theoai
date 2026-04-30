@@ -369,13 +369,19 @@ export default function SermonPage() {
                         <div 
                           key={i} 
                           onClick={() => projectStoredVerse(v)}
-                          onDoubleClick={() => removeFromQueue(i)}
                           className={`bg-dark-950/40 border p-4 rounded-xl group transition-all cursor-pointer select-none ${isProjected ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30 hover:bg-white/5'}`}
-                          title="Tap to Project, Double Tap to Remove"
+                          title="Tap to Project"
                         >
                           <div className="flex justify-between items-center mb-2">
                             <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isProjected ? 'text-gold' : 'text-gold/60'}`}>{v.reference}</span>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 items-center">
+                               <button 
+                                 onClick={(e) => { e.stopPropagation(); removeFromQueue(i) }}
+                                 className="p-1.5 rounded-lg transition-all text-red-500/50 hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100"
+                                 title="Remove from Queue"
+                               >
+                                 <Trash2 className="w-4 h-4" />
+                               </button>
                                <div className={`p-1.5 rounded-lg transition-all ${isProjected ? 'bg-gold text-dark-950' : 'text-cream/20 group-hover:text-gold/40'}`}>
                                  {isProjected ? <Eye className="w-4 h-4"/> : <div className="w-4 h-4" />}
                                </div>
