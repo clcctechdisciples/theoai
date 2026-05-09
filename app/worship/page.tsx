@@ -135,17 +135,43 @@ export default function WorshipPage() {
     setBulkLoading(false)
   }
 
+  const [saving, setSaving] = useState(false)
+
   const saveToLibrary = async () => {
     if (!songTitle.trim()) return alert('Please enter a Song Title to save.')
+    setSaving(true)
     try {
+      let finalLyrics = masterText
+      
+      // Auto-fetch lyrics if empty
+      if (!finalLyrics.trim()) {
+        const fetchRes = await fetch('/api/songs/fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: songTitle })
+        })
+        const fetchData = await fetchRes.json()
+        if (fetchData.success && fetchData.lyrics) {
+          finalLyrics = fetchData.lyrics
+          setMasterText(finalLyrics)
+        } else {
+          throw new Error('Failed to fetch lyrics automatically.')
+        }
+      }
+
       await fetch('/api/songs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: songTitle, lyrics: [masterText] })
+        body: JSON.stringify({ title: songTitle, lyrics: [finalLyrics] })
       })
-      fetch('/api/songs').then(r => r.json()).then(d => setLibrary(Array.isArray(d) ? d : []))
+      const res = await fetch('/api/songs')
+      const d = await res.json()
+      setLibrary(Array.isArray(d) ? d : [])
       alert('Song saved to Library!')
-    } catch (e) { alert('Failed to save.') }
+    } catch (e: any) { 
+      alert(e.message || 'Failed to save.') 
+    }
+    setSaving(false)
   }
 
   return (
@@ -351,8 +377,8 @@ export default function WorshipPage() {
                     className="bg-transparent border-none text-cream focus:outline-none w-full text-sm font-bold"
                   />
                 </div>
-                <button onClick={saveToLibrary} className="bg-forest border border-forest/30 hover:brightness-110 text-white p-2 rounded-lg" title="Save to Library">
-                  <Save className="w-4 h-4" />
+                <button onClick={saveToLibrary} disabled={saving} className="bg-forest border border-forest/30 hover:brightness-110 text-white p-2 rounded-lg flex items-center justify-center min-w-[36px]" title="Save to Library">
+                  {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                 </button>
               </div>
               <p className="text-[10px] text-cream/40 uppercase tracking-widest font-black mb-3">Paste Lyrics — auto-splits every 3 lines</p>

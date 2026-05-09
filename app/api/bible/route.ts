@@ -36,8 +36,19 @@ export async function GET(req: Request) {
       const data = await res.json()
       if (data.error) throw new Error(data.error.message)
       
-      const content = JSON.parse(data.choices[0].message.content)
-      return Response.json(content)
+      let contentString = data.choices[0].message.content.trim()
+      // Remove potential markdown code blocks
+      if (contentString.startsWith('```')) {
+        contentString = contentString.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+      }
+      
+      try {
+        const content = JSON.parse(contentString)
+        return Response.json(content)
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', contentString)
+        throw new Error('Invalid JSON received from AI')
+      }
 
     } catch (error: any) {
       console.error('AI Bible retrieval error:', error)

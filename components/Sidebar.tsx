@@ -214,8 +214,10 @@ export function Sidebar() {
                       <p className="text-[8px] text-white/80 line-clamp-2">{projState.scripture.text}</p>
                       <p className="text-[8px] font-black text-gold uppercase mt-1">{projState.scripture.reference}</p>
                     </div>
+                  ) : projState.mode === 'slide' && projState.slide ? (
+                    <img src={projState.slide.url} alt="Slide" className="w-full h-full object-contain absolute inset-0 z-20" />
                   ) : (
-                    <p className="text-[8px] text-cream/20 font-black uppercase tracking-widest">System Idle</p>
+                    <p className="text-[8px] text-cream/20 font-black uppercase tracking-widest relative z-30">System Idle</p>
                   )}
                 </div>
                 <div className="absolute top-1.5 right-1.5">
@@ -309,7 +311,7 @@ export function Sidebar() {
 
       {/* Sign Out */}
       <div className="p-4 border-t border-forest-700/20 shrink-0">
-        <button onClick={() => signOut()} className="flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-cream/30 hover:bg-red-500/5 hover:text-red-400 transition-all group">
+        <button onClick={() => signOut({ callbackUrl: '/login' })} className="flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-cream/30 hover:bg-red-500/5 hover:text-red-400 transition-all group">
           <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span className="font-semibold text-sm tracking-tight">Sign Out</span>
         </button>

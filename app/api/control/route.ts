@@ -45,6 +45,9 @@ export async function POST(req: Request) {
     state.mode = 'worship'
   } else if (data.action === 'setBackground') {
     state.backgroundUrl = data.url
+  } else if (data.action === 'setSlide') {
+    state.slide = { url: data.url, title: data.title }
+    state.mode = 'slide'
   }
 
   return NextResponse.json({ success: true, state })

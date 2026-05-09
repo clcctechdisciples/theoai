@@ -206,6 +206,12 @@ export default function DisplayPage() {
             </div>
           </div>
         )}
+
+        {state.mode === 'slide' && state.slide && (
+          <div className="w-full h-full flex items-center justify-center animate-fade-in z-20">
+            <img src={state.slide.url} alt={state.slide.title} className="max-w-full max-h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]" />
+          </div>
+        )}
       </div>
     </div>
     </div>
