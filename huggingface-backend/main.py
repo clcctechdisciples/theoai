@@ -11,7 +11,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 PRIMARY_MODEL = "google/gemma-3-27b-it:free"
 FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
 
-def call_llm(messages: List[Dict[str, str]], model: str = PRIMARY_MODEL) -> str:
+def call_llm(messages: List[Dict[str, Any]], model: str = PRIMARY_MODEL) -> str:
     """Helper to call OpenRouter with a specific model."""
     if not OPENROUTER_API_KEY:
         return "ERROR: OPENROUTER_API_KEY not configured on backend."
@@ -36,7 +36,7 @@ def call_llm(messages: List[Dict[str, str]], model: str = PRIMARY_MODEL) -> str:
         # Return error details so we can decide to fall back
         return f"HTTP_{response.status_code}: {response.text}"
 
-def get_ai_response(messages: List[Dict[str, str]]) -> str:
+def get_ai_response(messages: List[Dict[str, Any]]) -> str:
     """Tries the primary model, falls back to the secondary if primary fails."""
     # Try Primary
     res = call_llm(messages, PRIMARY_MODEL)
@@ -154,6 +154,26 @@ def ai_process(req: AIProcessRequest):
         return json.loads(res.strip())
     except:
         return {"type": "none", "error": "Invalid JSON from AI"}
+
+class FilterSlideRequest(BaseModel):
+    image_url: str
+
+@app.post("/api/filter-slide")
+def filter_slide(req: FilterSlideRequest):
+    system_prompt = "You are an AI assistant. Is the provided image a presentation slide (e.g. lyrics, scripture, title, powerpoint)? Return exactly true or false."
+    api_messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": [
+            {"type": "text", "text": "Is this image a presentation slide? Reply ONLY with 'true' or 'false'."},
+            {"type": "image_url", "image_url": {"url": req.image_url}}
+        ]}
+    ]
+    try:
+        res = get_ai_response(api_messages)
+        return {"is_slide": "true" in res.lower()}
+    except Exception as e:
+        # Fallback to true if AI filtering fails
+        return {"is_slide": True, "error": str(e)}
 
 @app.get("/")
 def health():

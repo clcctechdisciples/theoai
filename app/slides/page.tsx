@@ -21,12 +21,12 @@ export default function SlidesPage() {
   }, [])
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
     
     setUploading(true)
     const formData = new FormData()
-    formData.append('file', file)
+    files.forEach(f => formData.append('files', f))
 
     try {
       const res = await fetch('/api/slides/upload', {
@@ -78,7 +78,7 @@ export default function SlidesPage() {
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <input type="file" accept=".pdf,.pptx" onChange={handleUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                <input type="file" multiple accept="image/*" onChange={handleUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 <button className="flex items-center gap-2 px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest bg-gold border border-gold text-dark-950 hover:bg-gold-light transition-all shadow-lg glow-accent">
                   {uploading ? (
                     <div className="w-4 h-4 border-2 border-dark-950/30 border-t-dark-950 rounded-full animate-spin" />
