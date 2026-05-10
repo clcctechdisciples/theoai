@@ -9,10 +9,11 @@ type State = {
   lyricLines: string[]
   lyricSection: string
   backgroundUrl: string | null
+  slide?: { url: string; title: string } | null
 }
 
 export default function DisplayPage() {
-  const [state, setState] = useState<State>({ mode: 'idle', scripture: null, lyricLines: [], lyricSection: '', backgroundUrl: null })
+  const [state, setState] = useState<State>({ mode: 'idle', scripture: null, lyricLines: [], lyricSection: '', backgroundUrl: null, slide: null })
   const [screens, setScreens] = useState<any[]>([])
   const [uiVisible, setUiVisible] = useState(true)
 
