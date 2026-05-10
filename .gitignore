@@ -36,3 +36,4 @@ yarn-error.log*
 # Hugging Face Backend temporary files
 huggingface-backend/__pycache__/
 huggingface-backend/.env
+dev.db
