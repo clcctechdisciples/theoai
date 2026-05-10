@@ -22,7 +22,13 @@ export async function POST(req: Request) {
         'X-Title': 'Theo AI'
       },
       body: JSON.stringify({
-        model: 'google/gemini-pro-1.5',
+        model: 'google/gemini-1.5-pro',
+        plugins: [
+          {
+            id: 'web',
+            max_results: 3
+          }
+        ],
         messages: [
           { role: 'system', content: 'You are a lyrics database. Provide the full, accurate lyrics for the requested song. Do not include chords or any conversational text. Return ONLY the lyrics.' },
           { role: 'user', content: `Lyrics for "${title}"` }
