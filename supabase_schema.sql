@@ -58,6 +58,16 @@ CREATE TABLE IF NOT EXISTS slides (
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Media table (Pics and Videos)
+CREATE TABLE IF NOT EXISTS media (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  url TEXT NOT NULL,
+  type TEXT NOT NULL, -- 'image' or 'video'
+  "userId" UUID REFERENCES users(id) ON DELETE CASCADE,
+  "createdAt" TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- NOTE ON STORAGE:
 -- You must manually create two buckets in the Supabase Storage Dashboard:
 -- 1. 'slides' - Make it PUBLIC so slides can be viewed via URL.

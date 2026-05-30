@@ -86,7 +86,10 @@ export async function getData(userId: string) {
 
   // Format for frontend
   return { 
-    songs: (songs || []).map((s: any) => ({ ...s, lyrics: [s.lyrics] })), // Frontend expects array of strings
+    songs: (songs || []).map((s: any) => ({ 
+      ...s, 
+      lyrics: Array.isArray(s.lyrics) ? s.lyrics : [s.lyrics] // Ensure it's an array for the frontend
+    })),
     backgrounds: backgrounds || [], 
     audio: [] 
   }
@@ -108,7 +111,8 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
       throw findError
     }
 
-    const lyricsStr = Array.isArray(value.lyrics) ? value.lyrics.join('\n') : value.lyrics
+    // Ensure lyrics is stored as a string in the DB
+    const lyricsStr = Array.isArray(value.lyrics) ? value.lyrics.join('\n') : (value.lyrics || '')
 
     if (existing) {
       console.log('Updating existing song:', existing.id)
@@ -162,7 +166,7 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
     console.log('Saving slide for user:', userId)
     // If value.url is a data URI, upload to Supabase Storage instead
     let finalUrl = value.url
-    if (value.url.startsWith('data:')) {
+    if (value.url && value.url.startsWith('data:')) {
       try {
         console.log('Detected Data URI, ensuring Storage bucket exists: slides')
         
@@ -208,7 +212,7 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
     const { data, error } = await supabaseAdmin
       .from('slides')
       .insert({
-        title: value.title,
+        title: value.title || 'Untitled Slide',
         url: finalUrl,
         userId: userId
       })
@@ -380,6 +384,52 @@ export async function deleteRecordingByFilename(userId: string, filename: string
 
   if (error) {
     console.error('Supabase error in deleteRecordingByFilename:', error)
+    throw error
+  }
+  return true
+}
+
+// Media Management
+export async function getMedia(userId: string) {
+  checkDb()
+  const { data, error } = await supabaseAdmin
+    .from('media')
+    .select('*')
+    .eq('userId', userId)
+    .order('createdAt', { ascending: false })
+
+  if (error) {
+    console.error('Supabase error in getMedia:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function addMedia(media: { title: string, url: string, type: string, userId: string }) {
+  checkDb()
+  const { data, error } = await supabaseAdmin
+    .from('media')
+    .insert(media)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Supabase error in addMedia:', error)
+    throw error
+  }
+  return data
+}
+
+export async function deleteMedia(id: string, userId: string) {
+  checkDb()
+  const { error } = await supabaseAdmin
+    .from('media')
+    .delete()
+    .eq('id', id)
+    .eq('userId', userId)
+
+  if (error) {
+    console.error('Supabase error in deleteMedia:', error)
     throw error
   }
   return true

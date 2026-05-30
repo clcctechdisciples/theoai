@@ -9,11 +9,12 @@ type State = {
   lyricLines: string[]
   lyricSection: string
   backgroundUrl: string | null
+  videoUrl?: string | null
   slide?: { url: string; title: string } | null
 }
 
 export default function DisplayPage() {
-  const [state, setState] = useState<State>({ mode: 'idle', scripture: null, lyricLines: [], lyricSection: '', backgroundUrl: null, slide: null })
+  const [state, setState] = useState<State>({ mode: 'idle', scripture: null, lyricLines: [], lyricSection: '', backgroundUrl: null, videoUrl: null, slide: null })
   const [screens, setScreens] = useState<any[]>([])
   const [uiVisible, setUiVisible] = useState(true)
 
@@ -103,7 +104,7 @@ export default function DisplayPage() {
         
         {/* Projector Mode Quick-Switcher (The "Projector Section") */}
         <div className="flex bg-black/40 backdrop-blur-xl border border-cream/10 p-1 rounded-xl gap-1 shadow-2xl mb-2">
-           {['idle', 'worship', 'sermon'].map(m => (
+           {['idle', 'worship', 'sermon', 'video'].map(m => (
              <button
                key={m}
                onClick={() => pushMode(m)}
@@ -138,7 +139,16 @@ export default function DisplayPage() {
 
       {/* Background Layer */}
       <div className="absolute inset-0 z-0">
-        {state.backgroundUrl ? (
+        {state.videoUrl ? (
+          <video 
+            src={state.videoUrl} 
+            className="w-full h-full object-cover transition-all duration-1000"
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+          />
+        ) : state.backgroundUrl ? (
           <div 
             className="w-full h-full bg-cover bg-center transition-all duration-1000"
             style={{ backgroundImage: `url(${state.backgroundUrl})` }}

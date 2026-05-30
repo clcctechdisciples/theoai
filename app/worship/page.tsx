@@ -120,15 +120,25 @@ export default function WorshipPage() {
         }
       }
 
-      await fetch('/api/songs', {
+      const saveRes = await fetch('/api/songs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: songTitle, lyrics: [finalLyrics] })
       })
+      
+      if (!saveRes.ok) {
+        const err = await saveRes.json()
+        throw new Error(err.error || 'Failed to save song.')
+      }
+
       const res = await fetch('/api/songs')
       const d = await res.json()
-      setLibrary(Array.isArray(d) ? d : [])
-      alert('Song saved to Library!')
+      if (Array.isArray(d)) {
+        setLibrary(d)
+        alert('Song saved to Library!')
+      } else {
+        throw new Error('Failed to refresh library.')
+      }
     } catch (e: any) { 
       alert(e.message || 'Failed to save.') 
     }

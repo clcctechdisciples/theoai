@@ -10,6 +10,8 @@ export default function SlidesPage() {
   const [projState, setProjState] = useState<any>({ mode: 'idle' })
 
   useEffect(() => {
+    fetch('/api/slides').then(r => r.json()).then(d => setSlides(Array.isArray(d) ? d : []))
+
     const int = setInterval(async () => {
       try {
         const r = await fetch('/api/control')
@@ -32,13 +34,12 @@ export default function SlidesPage() {
       for (const file of files) {
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
           console.log('Processing PDF file:', file.name)
-          // Convert PDF to images
-          const pdfjs = await import('pdfjs-dist')
-          // Use a version-matched worker from a reliable CDN
-          const PDFJS_VERSION = '4.0.379' // or whatever version is installed
-          pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`
-          
           try {
+            // Dynamically import PDF.js
+            const pdfjs = await import('pdfjs-dist')
+            // Use the version from the package itself if possible, or a stable CDN
+            pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`
+            
             const arrayBuffer = await file.arrayBuffer()
             const loadingTask = pdfjs.getDocument({ data: arrayBuffer })
             const pdf = await loadingTask.promise
@@ -114,7 +115,18 @@ export default function SlidesPage() {
     })
   }
 
-  const removeSlide = (index: number) => {
+  const removeSlide = async (index: number) => {
+    const slide = slides[index]
+    if (!slide) return
+
+    if (slide.id) {
+      try {
+        await fetch('/api/slides', {
+          method: 'DELETE',
+          body: JSON.stringify({ id: slide.id })
+        })
+      } catch (e) { console.error('Error deleting slide:', e) }
+    }
     setSlides(slides.filter((_, i) => i !== index))
   }
 

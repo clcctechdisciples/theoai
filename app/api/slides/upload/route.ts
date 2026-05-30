@@ -51,20 +51,21 @@ export async function POST(req: Request) {
           })
           validSlides.push(slide)
         }
-      } else if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
-        // PPTX Handling - for now we just acknowledge we received it
-        // In a full implementation, we'd use a library or service to convert to images
-        // For now, we'll return an error explaining it should be converted to PDF
-        return NextResponse.json({ 
-          success: false, 
-          error: 'PPTX files must be exported to PDF before uploading for proper slide rendering.' 
+      } else {
+        // Handle PDF, PPTX and others by just saving the file to Storage
+        // We'll store it and provide the URL. Note: PPTX won't render as an image,
+        // but it will be in the library.
+        console.log('Saving non-image file to storage:', file.name, file.type)
+        
+        const base64 = buffer.toString('base64')
+        const mimeType = file.type || 'application/octet-stream'
+        const dataUri = `data:${mimeType};base64,${base64}`
+
+        const slide = await saveData((session.user as any).id, 'slides' as any, {
+          title: file.name,
+          url: dataUri
         })
-      } else if (file.type === 'application/pdf') {
-        // PDF should have been handled on the client, but if it reached here:
-        return NextResponse.json({ 
-          success: false, 
-          error: 'PDF files should be processed on the client. Please check your browser support.' 
-        })
+        validSlides.push(slide)
       }
     }
 

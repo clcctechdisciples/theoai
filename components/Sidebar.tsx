@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Music, MessageSquare, Settings, LogOut, UploadCloud, Monitor, Maximize, LayoutDashboard, History, MonitorPlay, ChevronDown, Presentation, X, Trash2 } from 'lucide-react'
+import { Music, MessageSquare, Settings, LogOut, UploadCloud, Monitor, Maximize, LayoutDashboard, History, MonitorPlay, ChevronDown, Presentation, X, Trash2, Film } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { useState, useRef, useEffect } from 'react'
 
@@ -10,6 +10,7 @@ const navItems = [
   { label: 'Worship Engine', href: '/worship', icon: Music },
   { label: 'Sermon Engine', href: '/sermon', icon: MessageSquare },
   { label: 'Slides Display', href: '/slides', icon: Presentation },
+  { label: 'Media Engine', href: '/media-engine', icon: Film },
 ]
 
 export function Sidebar() {

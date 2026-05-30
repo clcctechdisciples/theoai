@@ -45,6 +45,11 @@ export async function POST(req: Request) {
     state.mode = 'worship'
   } else if (data.action === 'setBackground') {
     state.backgroundUrl = data.url
+    state.videoUrl = null // Clear video when background is set
+  } else if (data.action === 'setVideo') {
+    state.videoUrl = data.url
+    state.backgroundUrl = null // Clear background when video is set
+    state.mode = 'video'
   } else if (data.action === 'setSlide') {
     state.slide = { url: data.url, title: data.title }
     state.mode = 'slide'
