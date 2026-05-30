@@ -1,7 +1,14 @@
 import { supabaseAdmin } from './supabase'
 
+function checkDb() {
+  if (!supabaseAdmin) {
+    throw new Error('Supabase Admin client is not initialized. Please ensure SERVICEROLE_KEY is set in environment variables.')
+  }
+}
+
 // User Management
 export async function getUsers() {
+  checkDb()
   const { data, error } = await supabaseAdmin
     .from('users')
     .select('*')
@@ -14,6 +21,7 @@ export async function getUsers() {
 }
 
 export async function addUser(user: any) {
+  checkDb()
   const payload: any = {
     username: user.username,
     password: user.password,
@@ -36,6 +44,7 @@ export async function addUser(user: any) {
 }
 
 export async function upsertUser(user: any) {
+  checkDb()
   const payload: any = {
     username: user.username,
     password: user.password,
@@ -60,6 +69,7 @@ export async function upsertUser(user: any) {
 
 // Data Management
 export async function getData(userId: string) {
+  checkDb()
   const { data: songs, error: songsError } = await supabaseAdmin
     .from('songs')
     .select('*')
@@ -76,13 +86,14 @@ export async function getData(userId: string) {
 
   // Format for frontend
   return { 
-    songs: (songs || []).map(s => ({ ...s, lyrics: [s.lyrics] })), // Frontend expects array of strings
+    songs: (songs || []).map((s: any) => ({ ...s, lyrics: [s.lyrics] })), // Frontend expects array of strings
     backgrounds: backgrounds || [], 
     audio: [] 
   }
 }
 
 export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'audio' | 'slides', value: any) {
+  checkDb()
   if (key === 'songs') {
     // Check if song with same title exists for this user
     const { data: existing } = await supabaseAdmin
@@ -183,6 +194,7 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
 }
 
 export async function resetPassword(username: string, newHashedPassword: string) {
+  checkDb()
   const { data, error } = await supabaseAdmin
     .from('users')
     .update({ password: newHashedPassword, updatedAt: new Date().toISOString() })
@@ -199,6 +211,7 @@ export async function resetPassword(username: string, newHashedPassword: string)
 
 // Settings Management
 export async function getSettings(userId: string) {
+  checkDb()
   const { data, error } = await supabaseAdmin
     .from('settings')
     .select('*')
@@ -212,6 +225,7 @@ export async function getSettings(userId: string) {
 }
 
 export async function updateSettings(userId: string, settings: any) {
+  checkDb()
   const { data: existing } = await supabaseAdmin
     .from('settings')
     .select('*')
@@ -240,6 +254,7 @@ export async function updateSettings(userId: string, settings: any) {
 
 // Recording Management
 export async function getRecordingByFilename(userId: string, filename: string) {
+  checkDb()
   const { data, error } = await supabaseAdmin
     .from('recordings')
     .select('*')
@@ -252,6 +267,7 @@ export async function getRecordingByFilename(userId: string, filename: string) {
 }
 
 export async function addRecording(recording: { title: string, filename: string, type: string, userId: string, data?: Buffer }) {
+  checkDb()
   const payload: any = {
     title: recording.title,
     filename: recording.filename,
@@ -274,6 +290,7 @@ export async function addRecording(recording: { title: string, filename: string,
 }
 
 export async function updateRecording(id: string, recording: any) {
+  checkDb()
   const payload: any = { ...recording, updatedAt: new Date().toISOString() }
   if (recording.data && Buffer.isBuffer(recording.data)) {
     payload.data = recording.data.toString('base64')
@@ -294,6 +311,7 @@ export async function updateRecording(id: string, recording: any) {
 }
 
 export async function getRecordings(userId: string) {
+  checkDb()
   const { data, error } = await supabaseAdmin
     .from('recordings')
     .select('*')
@@ -308,6 +326,7 @@ export async function getRecordings(userId: string) {
 }
 
 export async function deleteRecording(id: string, userId: string) {
+  checkDb()
   const { error } = await supabaseAdmin
     .from('recordings')
     .delete()
@@ -322,6 +341,7 @@ export async function deleteRecording(id: string, userId: string) {
 }
 
 export async function deleteRecordingByFilename(userId: string, filename: string) {
+  checkDb()
   const { error } = await supabaseAdmin
     .from('recordings')
     .delete()
