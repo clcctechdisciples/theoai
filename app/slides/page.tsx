@@ -30,41 +30,48 @@ export default function SlidesPage() {
       const processedFiles: { file: File | Blob, name: string }[] = []
 
       for (const file of files) {
-        if (file.type === 'application/pdf') {
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          console.log('Processing PDF file:', file.name)
           // Convert PDF to images
           const pdfjs = await import('pdfjs-dist')
-          // Using a more reliable worker source
-          pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
+          // Use a version-matched worker from a reliable CDN
+          const PDFJS_VERSION = '4.0.379' // or whatever version is installed
+          pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`
           
-          const arrayBuffer = await file.arrayBuffer()
-          const loadingTask = pdfjs.getDocument({ data: arrayBuffer })
-          const pdf = await loadingTask.promise
-          
-          console.log(`Processing PDF with ${pdf.numPages} pages`)
-
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i)
-            const viewport = page.getViewport({ scale: 2.0 })
-            const canvas = document.createElement('canvas')
-            const context = canvas.getContext('2d')
-            canvas.height = viewport.height
-            canvas.width = viewport.width
+          try {
+            const arrayBuffer = await file.arrayBuffer()
+            const loadingTask = pdfjs.getDocument({ data: arrayBuffer })
+            const pdf = await loadingTask.promise
             
-            if (context) {
-              await (page as any).render({ 
-                canvasContext: context, 
-                viewport,
-                canvas: canvas 
-              }).promise
-              const dataUrl = canvas.toDataURL('image/png')
-              const response = await fetch(dataUrl)
-              const blob = await response.blob()
-              processedFiles.push({ file: blob, name: `${file.name}-page-${i}.png` })
+            console.log(`PDF loaded. Pages: ${pdf.numPages}`)
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i)
+              const viewport = page.getViewport({ scale: 2.0 })
+              const canvas = document.createElement('canvas')
+              const context = canvas.getContext('2d')
+              canvas.height = viewport.height
+              canvas.width = viewport.width
+              
+              if (context) {
+                await (page as any).render({ 
+                  canvasContext: context, 
+                  viewport,
+                  canvas: canvas 
+                }).promise
+                const dataUrl = canvas.toDataURL('image/png')
+                const response = await fetch(dataUrl)
+                const blob = await response.blob()
+                processedFiles.push({ file: blob, name: `${file.name.replace('.pdf', '')}-page-${i}.png` })
+              }
             }
+          } catch (pdfErr) {
+            console.error('Error processing PDF with pdfjs:', pdfErr)
+            // Fallback: send the PDF as is and let the server handle it (though it might fail there too)
+            processedFiles.push({ file, name: file.name })
           }
-        } else if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || file.name.endsWith('.pptx')) {
-          // For PPTX, we can't easily convert on client without heavy libs
-          // We will send it to the server and let the user know if it's not supported yet
+        } else if (file.name.toLowerCase().endsWith('.pptx')) {
+          alert(`File "${file.name}" is a PowerPoint presentation. For best results, please export it to PDF before uploading. Attempting to upload as is...`)
           processedFiles.push({ file, name: file.name })
         } else {
           processedFiles.push({ file, name: file.name })

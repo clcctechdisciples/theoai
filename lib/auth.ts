@@ -15,6 +15,7 @@ export const authOptions: NextAuthOptions = {
         // Root admin fallback
         const adminUser = process.env.ADMIN_USERNAME
         const adminPass = process.env.ADMIN_PASSWORD
+        const ADMIN_ID = '00000000-0000-0000-0000-000000000000'
 
         // Check admin first
         if (credentials.username === adminUser) {
@@ -25,13 +26,13 @@ export const authOptions: NextAuthOptions = {
             try {
               const { upsertUser } = await import('./db')
               await upsertUser({
-                id: 'admin',
+                id: ADMIN_ID,
                 username: adminUser,
                 password: await bcrypt.hash(adminPass, 10)
               })
             } catch (e) { console.error('Admin sync error:', e) }
 
-            return { id: 'admin', name: 'Admin', email: 'admin@clcc.church' }
+            return { id: ADMIN_ID, name: 'Admin', email: 'admin@clcc.church' }
           }
         }
 

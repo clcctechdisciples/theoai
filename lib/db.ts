@@ -164,7 +164,15 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
     let finalUrl = value.url
     if (value.url.startsWith('data:')) {
       try {
-        console.log('Detected Data URI, uploading to Storage bucket: slides')
+        console.log('Detected Data URI, ensuring Storage bucket exists: slides')
+        
+        // Ensure bucket exists
+        const { data: buckets } = await supabaseAdmin.storage.listBuckets()
+        if (!buckets?.find((b: any) => b.name === 'slides')) {
+          console.log('Creating slides bucket...')
+          await supabaseAdmin.storage.createBucket('slides', { public: true })
+        }
+
         const [header, base64Data] = value.url.split(',')
         const mime = header.split(':')[1].split(';')[0]
         const ext = mime.split('/')[1] || 'png'

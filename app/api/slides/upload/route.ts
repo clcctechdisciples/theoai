@@ -16,13 +16,15 @@ export async function POST(req: Request) {
     const backendUrl = process.env.AI_BACKEND_URL?.replace(/\/$/, '')
 
     for (const file of files) {
+      console.log('Processing file:', file.name, 'Type:', file.type)
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       
       // Handle image types
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/') || file.name.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
         const base64 = buffer.toString('base64')
-        const dataUri = `data:${file.type};base64,${base64}`
+        const mimeType = file.type || 'image/png'
+        const dataUri = `data:${mimeType};base64,${base64}`
 
         let isSlide = true // default to true
 

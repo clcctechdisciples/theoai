@@ -63,6 +63,14 @@ CREATE TABLE IF NOT EXISTS slides (
 -- 1. 'slides' - Make it PUBLIC so slides can be viewed via URL.
 -- 2. 'recordings' - (Optional if you move recording data to storage later).
 
+-- SEED DATA (Optional)
+-- Add the default admin user (ID matches lib/auth.ts)
+-- Replace 'hashed_password' with a bcrypt hash if you want to seed it manually,
+-- but the app will automatically upsert this on first admin login.
+-- INSERT INTO users (id, username, password) 
+-- VALUES ('00000000-0000-0000-0000-000000000000', 'admin', 'hashed_password')
+-- ON CONFLICT (username) DO NOTHING;
+
 -- Enable RLS (Optional, but recommended for production)
 -- For now, since we use supabaseAdmin (Service Role), we bypass RLS.
 -- If you want to use the public client, you'll need to add policies.

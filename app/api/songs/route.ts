@@ -21,9 +21,12 @@ export async function POST(req: Request) {
 
   try {
     const song = await req.json()
-    await saveData((session.user as any).id, 'songs', song)
-    return NextResponse.json({ success: true })
+    console.log('API: Saving song for user:', (session.user as any).id, song.title)
+    const result = await saveData((session.user as any).id, 'songs', song)
+    console.log('API: Song saved successfully:', result.id)
+    return NextResponse.json({ success: true, id: result.id })
   } catch (err: any) {
+    console.error('API: Song save error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
