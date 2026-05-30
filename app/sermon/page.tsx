@@ -40,9 +40,46 @@ export default function SermonPage() {
     fetch('/api/control').then(r => r.json()).then(d => setGlobalMode(d.mode))
   }, [])
 
+  const [isNearBottom, setIsNearBottom] = useState(true)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+      const atBottom = scrollHeight - scrollTop - clientHeight < 50
+      setIsNearBottom(atBottom)
+    }
+  }
+
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [transcript, interimTranscript])
+    if (isNearBottom) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [transcript, interimTranscript, isNearBottom])
+
+  const handleRecordingComplete = async (blob: Blob) => {
+    setPendingAudioBlob(blob)
+    
+    // Auto-archive sermon audio
+    const formData = new FormData()
+    const sessionId = Math.random().toString(36).substring(7)
+    formData.append('audio', blob, 'sermon.mp4')
+    formData.append('type', 'sermon')
+    formData.append('mode', 'sermon')
+    formData.append('sessionId', sessionId)
+    formData.append('title', `Sermon ${new Date().toLocaleString()}`)
+    
+    try {
+      const res = await fetch('/api/recordings/upload', {
+        method: 'POST',
+        body: formData
+      })
+      if (!res.ok) throw new Error(await res.text())
+      console.log('Sermon auto-archived successfully')
+    } catch (e) {
+      console.error('Failed to auto-archive sermon audio:', e)
+    }
+  }
 
   const handleTranscript = async (text: string, isFinal?: boolean) => {
     if (isFinal) {
@@ -163,6 +200,48 @@ export default function SermonPage() {
     saveQueue(next)
   }
 
+  const downloadPDF = async () => {
+    if (!summary) return
+    const { jsPDF } = await import('jspdf')
+    const doc = new jsPDF()
+    
+    const lines = summary.split('\n')
+    let y = 20
+    const margin = 20
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const contentWidth = pageWidth - (margin * 2)
+
+    doc.setFontSize(22)
+    doc.text('Sermon Summary', margin, y)
+    y += 15
+
+    doc.setFontSize(12)
+    lines.forEach(line => {
+      if (y > 270) {
+        doc.addPage()
+        y = 20
+      }
+
+      if (line.match(/^#+\s/)) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(16)
+        y += 5
+        doc.text(line.replace(/^#+\s/, ''), margin, y)
+        y += 10
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(12)
+      } else if (line.trim() === '') {
+        y += 5
+      } else {
+        const splitText = doc.splitTextToSize(line, contentWidth)
+        doc.text(splitText, margin, y)
+        y += (splitText.length * 7)
+      }
+    })
+
+    doc.save(`Sermon-Summary-${new Date().toISOString().split('T')[0]}.pdf`)
+  }
+
   const generateSummary = async () => {
     if (!transcript) return alert('No transcript available to summarize.')
     setGenerating(true)
@@ -229,7 +308,7 @@ export default function SermonPage() {
             </div>
           )}
 
-          <AudioEngine mode="sermon" onTranscript={handleTranscript} onRecordingComplete={setPendingAudioBlob} />
+          <AudioEngine mode="sermon" onTranscript={handleTranscript} onRecordingComplete={handleRecordingComplete} />
 
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
             {/* Live Transcript Log */}
@@ -248,7 +327,11 @@ export default function SermonPage() {
                     {transcript && <div className="text-[10px] font-black text-cream/40 uppercase tracking-widest bg-dark-950 px-3 py-1 rounded-full">{transcript.split(' ').length} words</div>}
                   </div>
                 </div>
-                <div className="p-6 overflow-y-auto flex-1 font-inter text-cream/80 leading-relaxed text-lg bg-dark/40">
+                <div 
+                  ref={scrollContainerRef}
+                  onScroll={handleScroll}
+                  className="p-6 overflow-y-auto flex-1 font-inter text-cream/80 leading-relaxed text-lg bg-dark/40"
+                >
                   {transcript || interimTranscript ? (
                     <p>
                       {transcript}
@@ -444,12 +527,12 @@ export default function SermonPage() {
                     })}
                     
                     <button 
-                      onClick={() => window.print()}
+                      onClick={downloadPDF}
                       className="mt-8 w-full bg-dark border border-gold/40 text-gold-light font-bold py-3 rounded-lg hover:bg-gold/10 transition-all flex items-center justify-center gap-2"
                     >
-                      <Download className="w-4 h-4"/> Download & Print Summary
+                      <Download className="w-4 h-4"/> Download PDF Summary
                     </button>
-                    <p className="text-center text-[10px] text-cream/30 uppercase mt-2">Use browser print for PDF export</p>
+                    <p className="text-center text-[10px] text-cream/30 uppercase mt-2">Professional PDF Export Generated by Theo</p>
                   </div>
                 )}
               </div>

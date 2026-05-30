@@ -23,15 +23,11 @@ export const authOptions: NextAuthOptions = {
           if (isAdminPassValid) {
             // Ensure admin exists in DB for foreign key relations
             try {
-              const { prisma } = await import('./db')
-              await prisma.user.upsert({
-                where: { username: adminUser },
-                update: {},
-                create: {
-                  id: 'admin',
-                  username: adminUser,
-                  password: await bcrypt.hash(adminPass, 10)
-                }
+              const { upsertUser } = await import('./db')
+              await upsertUser({
+                id: 'admin',
+                username: adminUser,
+                password: await bcrypt.hash(adminPass, 10)
               })
             } catch (e) { console.error('Admin sync error:', e) }
 

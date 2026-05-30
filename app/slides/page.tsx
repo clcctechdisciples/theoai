@@ -25,10 +25,42 @@ export default function SlidesPage() {
     if (files.length === 0) return
     
     setUploading(true)
-    const formData = new FormData()
-    files.forEach(f => formData.append('files', f))
-
+    
     try {
+      const processedFiles: { file: File | Blob, name: string }[] = []
+
+      for (const file of files) {
+        if (file.type === 'application/pdf') {
+          // Convert PDF to images
+          const pdfjs = await import('pdfjs-dist')
+          pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+          
+          const arrayBuffer = await file.arrayBuffer()
+          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
+          
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i)
+            const viewport = page.getViewport({ scale: 2.0 })
+            const canvas = document.createElement('canvas')
+            const context = canvas.getContext('2d')
+            canvas.height = viewport.height
+            canvas.width = viewport.width
+            
+            if (context) {
+              await page.render({ canvasContext: context, viewport }).promise
+              const dataUrl = canvas.toDataURL('image/png')
+              const blob = await (await fetch(dataUrl)).blob()
+              processedFiles.push({ file: blob, name: `${file.name}-page-${i}.png` })
+            }
+          }
+        } else {
+          processedFiles.push({ file, name: file.name })
+        }
+      }
+
+      const formData = new FormData()
+      processedFiles.forEach(pf => formData.append('files', pf.file, pf.name))
+
       const res = await fetch('/api/slides/upload', {
         method: 'POST',
         body: formData
@@ -39,8 +71,9 @@ export default function SlidesPage() {
       } else {
         alert('Upload failed: ' + data.error)
       }
-    } catch (e) {
-      alert('Error uploading file.')
+    } catch (e: any) {
+      console.error('Upload error:', e)
+      alert('Error uploading file: ' + e.message)
     }
     setUploading(false)
   }
@@ -78,7 +111,7 @@ export default function SlidesPage() {
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <input type="file" multiple accept="image/*" onChange={handleUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                <input type="file" multiple accept="image/*,.pdf,.pptx" onChange={handleUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 <button className="flex items-center gap-2 px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest bg-gold border border-gold text-dark-950 hover:bg-gold-light transition-all shadow-lg glow-accent">
                   {uploading ? (
                     <div className="w-4 h-4 border-2 border-dark-950/30 border-t-dark-950 rounded-full animate-spin" />

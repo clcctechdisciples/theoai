@@ -7,12 +7,15 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Missing scripture reference' }, { status: 400 })
   }
 
-  const copyrightedVersions = ['nlt', 'niv', 'amp']
+  // List of versions that bible-api.com supports (public domain)
+  const publicDomainVersions = ['kjv', 'asv', 'web', 'bbe', 'almeida']
   
-  if (copyrightedVersions.includes(translation)) {
+  if (!publicDomainVersions.includes(translation)) {
     try {
       const apiKey = process.env.OPENROUTER_API_KEY
-      if (!apiKey) throw new Error("API key missing for AI scripture retrieval")
+      if (!apiKey || apiKey === 'sk-or-v1-placeholder') {
+        throw new Error("OpenRouter API key missing. Please configure OPENROUTER_API_KEY for non-KJV versions.")
+      }
 
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -23,20 +26,31 @@ export async function GET(req: Request) {
           'X-Title': 'Theo AI'
         },
         body: JSON.stringify({
-          model: 'google/gemini-1.5-pro', // High speed and accurate for verse lists
+          model: 'google/gemini-2.0-flash-001',
           messages: [
-            { role: 'system', content: 'You are a Bible scholar. Provide the text for the requested reference. If it is a chapter, provide a list of verses. Respond ONLY with valid JSON and no markdown formatting.' },
-            { role: 'user', content: `Provide the text for "${ref}" in the ${translation.toUpperCase()} translation. 
-            If it is a single verse, respond with exactly: { "reference": "...", "text": "..." }
-            If it is a chapter or range, respond with exactly: { "reference": "...", "verses": [{ "verse": 1, "text": "..." }, ...] }` }
-          ]
+            { 
+              role: 'system', 
+              content: 'You are a professional Bible scholar. Provide the exact text for the requested Bible reference in the specified translation. Respond ONLY with valid JSON and no markdown formatting.' 
+            },
+            { 
+              role: 'user', 
+              content: `Provide the text for "${ref}" in the ${translation.toUpperCase()} translation. 
+              If it is a single verse, respond with exactly: { "reference": "...", "text": "..." }
+              If it is a chapter or range, respond with exactly: { "reference": "...", "verses": [{ "verse": 1, "text": "..." }, ...] }` 
+            }
+          ],
+          response_format: { type: "json_object" }
         })
       })
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `OpenRouter API returned ${res.status}`);
+      }
+
       const data = await res.json()
-      if (data.error) throw new Error(data.error.message)
-      
       let contentString = data.choices[0].message.content.trim()
+      
       // Remove potential markdown code blocks
       if (contentString.startsWith('```')) {
         contentString = contentString.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
@@ -52,7 +66,7 @@ export async function GET(req: Request) {
 
     } catch (error: any) {
       console.error('AI Bible retrieval error:', error)
-      return Response.json({ error: 'Failed to retrieve scripture via AI: ' + error.message }, { status: 500 })
+      // Fallback: If AI fails, try to see if bible-api.com can handle it anyway (sometimes it supports more)
     }
   }
 
@@ -61,7 +75,8 @@ export async function GET(req: Request) {
     const data = await res.json()
 
     if (data.error) {
-      return Response.json({ error: data.error }, { status: 404 })
+      // If we already tried AI and failed, and now bible-api.com also fails
+      return Response.json({ error: `Version ${translation.toUpperCase()} is not available or the reference is invalid.` }, { status: 404 })
     }
 
     if (data.verses && data.verses.length > 1) {

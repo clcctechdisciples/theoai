@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getRecordingByFilename, addRecording, updateRecording } from '@/lib/db'
 
 export async function POST(req: Request) {
   try {
@@ -25,27 +25,24 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(arrayBuffer)
 
     // Find existing recording for this session or create new one
-    const existing = await prisma.recording.findFirst({
-      where: { userId, filename }
-    })
+    const existing = await getRecordingByFilename(userId, filename)
 
     if (existing) {
       // Append to existing data
-      const newData = existing.data ? Buffer.concat([existing.data, buffer]) : buffer
-      await prisma.recording.update({
-        where: { id: existing.id },
-        data: { data: newData }
-      })
+      let existingBuffer = Buffer.alloc(0)
+      if (existing.data) {
+        existingBuffer = Buffer.from(existing.data, 'base64')
+      }
+      const newData = Buffer.concat([existingBuffer, buffer])
+      await updateRecording(existing.id, { data: newData })
     } else {
       // Create new recording
-      await prisma.recording.create({
-        data: {
-          title: filename.replace('.webm', ''),
-          filename,
-          type: mode,
-          data: buffer,
-          userId
-        }
+      await addRecording({
+        title: filename.replace('.webm', ''),
+        filename,
+        type: mode,
+        data: buffer,
+        userId
       })
     }
 
@@ -55,4 +52,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
-

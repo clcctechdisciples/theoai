@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getRecordingByFilename } from '@/lib/db'
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -16,13 +16,13 @@ export async function GET(req: Request) {
   const userId = (session.user as any).id
 
   try {
-    const record = await prisma.recording.findFirst({
-      where: { userId, filename }
-    })
+    const record = await getRecordingByFilename(userId, filename)
 
     if (!record || !record.data) {
       return new NextResponse('File not found', { status: 404 })
     }
+
+    const dataBuffer = Buffer.from(record.data, 'base64')
 
     // Determine mime
     const ext = filename.split('.').pop()?.toLowerCase()
@@ -32,16 +32,15 @@ export async function GET(req: Request) {
 
     const headers = new Headers()
     headers.set('Content-Type', mimeType)
-    headers.set('Content-Length', record.data.length.toString())
+    headers.set('Content-Length', dataBuffer.length.toString())
     
     if (url.searchParams.get('download')) {
        headers.set('Content-Disposition', `attachment; filename="${filename}"`)
     }
 
-    return new NextResponse(record.data, { headers })
+    return new NextResponse(dataBuffer, { headers })
 
   } catch (err: any) {
     return new NextResponse(err.message, { status: 500 })
   }
 }
-

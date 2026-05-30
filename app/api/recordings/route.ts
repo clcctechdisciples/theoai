@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getRecordings } from '@/lib/db'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -9,15 +9,12 @@ export async function GET() {
   const userId = (session.user as any).id
 
   try {
-    const records = await prisma.recording.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
-    })
+    const records = await getRecordings(userId)
     
-    const recordings = records.map((rec) => ({
+    const recordings = records.map((rec: any) => ({
       id: rec.id,
       title: rec.title,
-      date: rec.createdAt.toLocaleDateString(),
+      date: new Date(rec.createdAt).toLocaleDateString(),
       duration: 'Unknown', 
       type: rec.type.toUpperCase(),
       filename: rec.filename
@@ -29,4 +26,3 @@ export async function GET() {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
-
