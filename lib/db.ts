@@ -168,25 +168,28 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
     }
   } else if (key === 'slides') {
     console.log('Saving slide for user:', userId)
-    // If value.url is a data URI, upload to Supabase Storage instead
     let finalUrl = value.url
+    
+    // Ensure bucket exists on every upload (Supabase Admin handles this)
+    try {
+      const { data: buckets } = await supabaseAdmin.storage.listBuckets()
+      if (!buckets?.find((b: any) => b.name === 'slides')) {
+        await supabaseAdmin.storage.createBucket('slides', { public: true })
+      }
+    } catch (e) { console.error('Bucket check failed:', e) }
+
+    // Check if it's a data URI (which means it needs to be uploaded to Storage)
     if (value.url && value.url.startsWith('data:')) {
       try {
-        console.log('Detected Data URI, ensuring Storage bucket exists: slides')
+        console.log('Detected Data URI for slide, uploading to Supabase Storage...')
         
-        // Ensure bucket exists
-        const { data: buckets } = await supabaseAdmin.storage.listBuckets()
-        if (!buckets?.find((b: any) => b.name === 'slides')) {
-          console.log('Creating slides bucket...')
-          await supabaseAdmin.storage.createBucket('slides', { public: true })
-        }
-
         const [header, base64Data] = value.url.split(',')
         const mime = header.split(':')[1].split(';')[0]
         const ext = mime.split('/')[1] || 'png'
         const buffer = Buffer.from(base64Data, 'base64')
-        const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
+        const fileName = `${userId}/slide-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
 
+        // Ensure bucket is public
         const { data: uploadData, error: uploadError } = await supabaseAdmin
           .storage
           .from('slides')
@@ -197,19 +200,18 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
 
         if (uploadError) {
           console.error('Supabase Storage upload error:', uploadError)
-          throw uploadError
+          // If upload fails, we'll stick with the data URI as a fallback
+        } else {
+          const { data: { publicUrl } } = supabaseAdmin
+            .storage
+            .from('slides')
+            .getPublicUrl(fileName)
+          
+          finalUrl = publicUrl
+          console.log('Slide uploaded successfully. Public URL:', finalUrl)
         }
-
-        const { data: { publicUrl } } = supabaseAdmin
-          .storage
-          .from('slides')
-          .getPublicUrl(fileName)
-        
-        finalUrl = publicUrl
-        console.log('Slide uploaded successfully to Storage:', finalUrl)
       } catch (e) {
-        console.error('Error uploading slide to storage:', e)
-        // Fallback to data URI if storage fails
+        console.error('Unexpected error during slide storage upload:', e)
       }
     }
 

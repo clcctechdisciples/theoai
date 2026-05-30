@@ -22,31 +22,37 @@ export async function POST(req: Request) {
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       
-      // Handle image types
-      if (file.type.startsWith('image/') || file.name.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
+      const isImage = file.type.startsWith('image/') || file.name.match(/\.(png|jpg|jpeg|gif|webp)$/i)
+      
+      if (isImage) {
         const base64 = buffer.toString('base64')
         const mimeType = file.type || 'image/png'
         const dataUri = `data:${mimeType};base64,${base64}`
 
-        let isSlide = true // default to true
+        // AI SLIDE ANALYSIS:
+        // We'll use AI to determine if this image is actually a presentation slide
+        // This prevents "picking" random pictures from a PDF that aren't slides
+        let isActuallyASlide = true 
 
         if (backendUrl && backendUrl !== 'https://huggingface.co/spaces/your-space-url') {
           try {
-            const res = await fetch(`${backendUrl}/api/filter-slide`, {
+            console.log('Calling AI Vision to verify slide:', file.name)
+            const res = await fetch(`${backendUrl}/api/verify-slide`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ image_url: dataUri })
+              body: JSON.stringify({ image: dataUri })
             })
             if (res.ok) {
-              const data = await res.json()
-              isSlide = data.is_slide
+              const analysis = await res.json()
+              isActuallyASlide = analysis.is_slide
+              console.log(`AI Analysis for ${file.name}: ${isActuallyASlide ? 'SLIDE' : 'NOT A SLIDE'}`)
             }
           } catch (e) {
-            console.error("Error calling filter-slide API", e)
+            console.error("AI Slide Analysis error", e)
           }
         }
 
-        if (isSlide) {
+        if (isActuallyASlide) {
           const slide = await saveData(userId, 'slides' as any, {
             title: file.name,
             url: dataUri
@@ -54,18 +60,11 @@ export async function POST(req: Request) {
           validSlides.push(slide)
         }
       } else {
-        // Handle PDF, PPTX and others by just saving the file to Storage
-        // We'll store it and provide the URL. Note: PPTX won't render as an image,
-        // but it will be in the library.
-        console.log('Saving non-image file to storage:', file.name, file.type)
-        
-        const base64 = buffer.toString('base64')
-        const mimeType = file.type || 'application/octet-stream'
-        const dataUri = `data:${mimeType};base64,${base64}`
-
+        // Fallback for non-image files
+        console.log('Saving non-image file:', file.name)
         const slide = await saveData(userId, 'slides' as any, {
           title: file.name,
-          url: dataUri
+          url: `data:application/octet-stream;base64,${buffer.toString('base64')}`
         })
         validSlides.push(slide)
       }

@@ -26,10 +26,12 @@ export async function POST(req: Request) {
       const type = isImage ? 'image' : (isVideo ? 'video' : 'other')
 
       // Ensure bucket exists
-      const { data: buckets } = await supabaseAdmin.storage.listBuckets()
-      if (!buckets?.find((b: any) => b.name === 'media')) {
-        await supabaseAdmin.storage.createBucket('media', { public: true })
-      }
+      try {
+        const { data: buckets } = await supabaseAdmin.storage.listBuckets()
+        if (!buckets?.find((b: any) => b.name === 'media')) {
+          await supabaseAdmin.storage.createBucket('media', { public: true })
+        }
+      } catch (e) { console.error('Bucket check failed:', e) }
 
       const fileName = `${userId}/${Date.now()}-${file.name}`
       const { data: uploadData, error: uploadError } = await supabaseAdmin

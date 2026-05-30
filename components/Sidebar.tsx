@@ -215,6 +215,8 @@ export function Sidebar() {
                     </div>
                   ) : projState.mode === 'slide' && projState.slide ? (
                     <img src={projState.slide.url} alt="Slide" className="w-full h-full object-contain absolute inset-0 z-20" />
+                  ) : projState.mode === 'video' && projState.videoUrl ? (
+                    <video src={projState.videoUrl} className="w-full h-full object-cover absolute inset-0 z-20" muted autoPlay loop />
                   ) : (
                     <p className="text-[8px] text-cream/20 font-black uppercase tracking-widest relative z-30">System Idle</p>
                   )}
