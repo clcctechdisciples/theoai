@@ -47,7 +47,11 @@ export default function SlidesPage() {
             canvas.width = viewport.width
             
             if (context) {
-              await page.render({ canvasContext: context, viewport }).promise
+              await (page as any).render({ 
+                canvasContext: context, 
+                viewport,
+                canvas: canvas 
+              }).promise
               const dataUrl = canvas.toDataURL('image/png')
               const blob = await (await fetch(dataUrl)).blob()
               processedFiles.push({ file: blob, name: `${file.name}-page-${i}.png` })
