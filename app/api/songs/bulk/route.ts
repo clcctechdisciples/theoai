@@ -6,6 +6,8 @@ import { saveData } from '@/lib/db'
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = session.user as any
+  const userId = user.id === 'admin' ? '00000000-0000-0000-0000-000000000000' : user.id
 
   try {
     const { content } = await req.json()
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
           if (Array.isArray(songs)) {
             for (const song of songs) {
               if (song.title && song.lyrics) {
-                await saveData((session.user as any).id, 'songs', song)
+                await saveData(userId, 'songs', song)
               }
             }
             return NextResponse.json({ success: true, count: songs.length })
@@ -101,7 +103,7 @@ export async function POST(req: Request) {
     if (Array.isArray(songs)) {
       for (const song of songs) {
         if (song.title && song.lyrics) {
-          await saveData((session.user as any).id, 'songs', song)
+          await saveData(userId, 'songs', song)
         }
       }
       return NextResponse.json({ success: true, count: songs.length })
