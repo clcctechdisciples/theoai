@@ -2,7 +2,11 @@ import { supabaseAdmin } from './supabase'
 
 function checkDb() {
   if (!supabaseAdmin) {
-    throw new Error('Supabase Admin client is not initialized. Please ensure SERVICEROLE_KEY is set in environment variables.')
+    const missing = []
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.SUPABASE_URL) missing.push('SUPABASE_URL')
+    if (!process.env.SERVICEROLE_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY')
+    
+    throw new Error(`Supabase Admin client is not initialized. Missing: ${missing.join(', ')}. Please check your Vercel environment variables.`)
   }
 }
 
