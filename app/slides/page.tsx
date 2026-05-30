@@ -33,57 +33,107 @@ export default function SlidesPage() {
 
       for (const file of files) {
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-          console.log('Processing PDF file:', file.name)
+          console.log('Using AI to process PDF slides:', file.name)
           try {
-            // Dynamically import PDF.js
             const pdfjs = await import('pdfjs-dist')
-            // Use the version from the package itself if possible, or a stable CDN
             pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`
             
             const arrayBuffer = await file.arrayBuffer()
             const loadingTask = pdfjs.getDocument({ data: arrayBuffer })
             const pdf = await loadingTask.promise
             
-            console.log(`PDF loaded. Pages: ${pdf.numPages}`)
-
+            let fullText = ''
             for (let i = 1; i <= pdf.numPages; i++) {
               const page = await pdf.getPage(i)
-              
-              // Use a higher scale for better quality, but maintain aspect ratio
-              const scale = 2.5
-              const viewport = page.getViewport({ scale })
-              
-              const canvas = document.createElement('canvas')
-              const context = canvas.getContext('2d')
-              
-              if (context) {
-                // Ensure canvas size matches viewport exactly
-                canvas.height = viewport.height
-                canvas.width = viewport.width
-                
-                // Clear canvas before rendering
-                context.clearRect(0, 0, canvas.width, canvas.height)
-                
-                await (page as any).render({ 
-                  canvasContext: context, 
-                  viewport: viewport,
-                  enableWebGL: true // Use WebGL if possible for better rendering
-                }).promise
-                
-                const dataUrl = canvas.toDataURL('image/png', 1.0)
-                const response = await fetch(dataUrl)
-                const blob = await response.blob()
-                processedFiles.push({ file: blob, name: `${file.name.replace('.pdf', '')}-page-${i}.png` })
+              const textContent = await page.getTextContent()
+              const pageText = textContent.items.map((item: any) => item.str).join(' ')
+              fullText += `--- PAGE ${i} ---\n${pageText}\n\n`
+            }
+
+            // Send to AI to extract slide content and formatting
+            const aiRes = await fetch('/api/slides/ai-extract', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: fullText, fileName: file.name })
+            })
+            
+            const aiData = await aiRes.json()
+            if (aiData.success && aiData.slides) {
+              // Create visual slides from AI data
+              for (const aiSlide of aiData.slides) {
+                const canvas = document.createElement('canvas')
+                canvas.width = 1920
+                canvas.height = 1080
+                const ctx = canvas.getContext('2d')
+                if (ctx) {
+                  // Draw beautiful AI-generated slide
+                  const gradient = ctx.createLinearGradient(0, 0, 1920, 1080)
+                  gradient.addColorStop(0, '#06100b') // Darker Forest
+                  gradient.addColorStop(0.5, '#0a1a12') // Forest
+                  gradient.addColorStop(1, '#000000')
+                  ctx.fillStyle = gradient
+                  ctx.fillRect(0, 0, 1920, 1080)
+                  
+                  // Subtle Pattern (Dots)
+                  ctx.fillStyle = 'rgba(201, 168, 76, 0.05)'
+                  for (let x = 0; x < 1920; x += 40) {
+                    for (let y = 0; y < 1080; y += 40) {
+                      ctx.beginPath()
+                      ctx.arc(x, y, 1, 0, Math.PI * 2)
+                      ctx.fill()
+                    }
+                  }
+
+                  // Gold Border with Glow
+                  ctx.shadowColor = 'rgba(201, 168, 76, 0.3)'
+                  ctx.shadowBlur = 20
+                  ctx.strokeStyle = '#c9a84c' // Gold
+                  ctx.lineWidth = 4
+                  ctx.strokeRect(60, 60, 1800, 960)
+                  ctx.shadowBlur = 0
+
+                  // Text Settings
+                  ctx.fillStyle = '#f5f5f0' // Cream
+                  ctx.textAlign = 'center'
+                  ctx.textBaseline = 'middle'
+                  
+                  // Title
+                  ctx.font = 'bold 90px Cinzel, serif'
+                  const title = aiSlide.title.toUpperCase()
+                  ctx.fillText(title, 960, 300)
+                  
+                  // Title Underline
+                  ctx.fillStyle = '#c9a84c'
+                  ctx.fillRect(960 - 200, 370, 400, 4)
+
+                  // Content
+                  ctx.fillStyle = '#f5f5f0'
+                  ctx.font = '55px Inter, sans-serif'
+                  const contentLines = aiSlide.content.split('\n')
+                  const startY = 550
+                  contentLines.forEach((line: string, idx: number) => {
+                    ctx.fillText(line, 960, startY + (idx * 100))
+                  })
+
+                  // Footer
+                  ctx.font = 'black 20px Inter, sans-serif'
+                  ctx.fillStyle = 'rgba(245, 245, 240, 0.2)'
+                  ctx.fillText('THEO AI PRESENTATION ENGINE', 960, 1000)
+
+                  const dataUrl = canvas.toDataURL('image/png')
+                  const response = await fetch(dataUrl)
+                  const blob = await response.blob()
+                  processedFiles.push({ file: blob, name: `${aiSlide.title || 'Slide'}.png` })
+                }
               }
+            } else {
+              throw new Error(aiData.error || 'AI extraction failed')
             }
           } catch (pdfErr) {
-            console.error('Error processing PDF with pdfjs:', pdfErr)
-            // Fallback: send the PDF as is and let the server handle it (though it might fail there too)
+            console.error('AI Slide processing error:', pdfErr)
+            alert('Failed to process PDF with AI. Falling back to standard upload.')
             processedFiles.push({ file, name: file.name })
           }
-        } else if (file.name.toLowerCase().endsWith('.pptx')) {
-          alert(`File "${file.name}" is a PowerPoint presentation. For best results, please export it to PDF before uploading. Attempting to upload as is...`)
-          processedFiles.push({ file, name: file.name })
         } else {
           processedFiles.push({ file, name: file.name })
         }
@@ -169,7 +219,7 @@ export default function SlidesPage() {
                   ) : (
                     <>
                       <FileUp className="w-4 h-4" />
-                      <span>Upload Slides</span>
+                      <span>AI Slide Upload</span>
                     </>
                   )}
                 </button>
@@ -182,7 +232,7 @@ export default function SlidesPage() {
             <div className="lg:col-span-3 space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-black uppercase tracking-[0.3em] text-cream/30 flex items-center gap-2">
-                  <Layers className="w-4 h-4" /> Slide Deck
+                  <Layers className="w-4 h-4" /> AI Slide Deck
                 </h2>
                 <span className="text-[10px] font-black text-gold bg-gold/10 px-3 py-1 rounded-full border border-gold/20">{slides.length} Slides</span>
               </div>
