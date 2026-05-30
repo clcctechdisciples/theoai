@@ -6,6 +6,8 @@ import { saveData } from '@/lib/db'
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = session.user as any
+  const userId = user.id === 'admin' ? '00000000-0000-0000-0000-000000000000' : user.id
 
   try {
     const formData = await req.formData()
@@ -45,7 +47,7 @@ export async function POST(req: Request) {
         }
 
         if (isSlide) {
-          const slide = await saveData((session.user as any).id, 'slides' as any, {
+          const slide = await saveData(userId, 'slides' as any, {
             title: file.name,
             url: dataUri
           })
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
         const mimeType = file.type || 'application/octet-stream'
         const dataUri = `data:${mimeType};base64,${base64}`
 
-        const slide = await saveData((session.user as any).id, 'slides' as any, {
+        const slide = await saveData(userId, 'slides' as any, {
           title: file.name,
           url: dataUri
         })

@@ -6,7 +6,8 @@ import { supabaseAdmin } from '@/lib/supabase'
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const userId = (session.user as any).id
+  const user = session.user as any
+  const userId = user.id === 'admin' ? '00000000-0000-0000-0000-000000000000' : user.id
   
   try {
     const { data, error } = await supabaseAdmin
@@ -25,7 +26,8 @@ export async function GET() {
 export async function DELETE(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const userId = (session.user as any).id
+  const user = session.user as any
+  const userId = user.id === 'admin' ? '00000000-0000-0000-0000-000000000000' : user.id
   
   try {
     const { id } = await req.json()
