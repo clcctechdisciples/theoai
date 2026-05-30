@@ -108,17 +108,52 @@ export default function SlidesPage() {
 
                   // Content
                   ctx.fillStyle = '#f5f5f0'
-                  ctx.font = '55px Inter, sans-serif'
-                  const contentLines = aiSlide.content.split('\n')
-                  const startY = 550
-                  contentLines.forEach((line: string, idx: number) => {
-                    ctx.fillText(line, 960, startY + (idx * 100))
-                  })
+                  
+                  const contentText = aiSlide.content
+                  const maxWidth = 1600
+                  const lineHeight = 70
+                  const x = 960
+                  let y = 500
+
+                  // Helper function to wrap text
+                  const wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+                    const paragraphs = text.split('\n')
+                    let currentY = y
+
+                    for (const paragraph of paragraphs) {
+                      const words = paragraph.split(' ')
+                      let line = ''
+
+                      for (let n = 0; n < words.length; n++) {
+                        const testLine = line + words[n] + ' '
+                        const metrics = context.measureText(testLine)
+                        const testWidth = metrics.width
+                        if (testWidth > maxWidth && n > 0) {
+                          context.fillText(line, x, currentY)
+                          line = words[n] + ' '
+                          currentY += lineHeight
+                        } else {
+                          line = testLine
+                        }
+                      }
+                      context.fillText(line, x, currentY)
+                      currentY += lineHeight + 20 // Add space between paragraphs
+                    }
+                  }
+
+                  // Adjust font size based on content length
+                  if (contentText.length > 300) {
+                    ctx.font = '40px Inter, sans-serif'
+                  } else {
+                    ctx.font = '55px Inter, sans-serif'
+                  }
+
+                  wrapText(ctx, contentText, x, y, maxWidth, lineHeight)
 
                   // Footer
                   ctx.font = 'black 20px Inter, sans-serif'
                   ctx.fillStyle = 'rgba(245, 245, 240, 0.2)'
-                  ctx.fillText('THEO AI PRESENTATION ENGINE', 960, 1000)
+                  ctx.fillText('THEO AI PRESENTATION ENGINE', 960, 1020)
 
                   const dataUrl = canvas.toDataURL('image/png')
                   const response = await fetch(dataUrl)

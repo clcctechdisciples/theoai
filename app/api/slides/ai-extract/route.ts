@@ -13,18 +13,19 @@ export async function POST(req: Request) {
 
     const prompt = `You are an AI presentation expert. Analyze the following text extracted from a PDF presentation file: "${fileName}".
     
-    TASK:
-    1. SEGMENT: Break the text into individual, logical slides.
-    2. TITLIZE: Create a clear, bold title for each slide.
-    3. CONDENSE: Summarize the main points for each slide into 2-4 clean, readable lines.
-    4. STYLE: Ensure the content is suitable for a large church projector screen.
+    CRITICAL INSTRUCTIONS:
+    1. PRESERVE STRUCTURE: The text contains "--- PAGE X ---" markers. Treat each page marker as a potential new slide. Do not skip pages that contain useful information.
+    2. TITLIZE: Every slide MUST have a clear, concise title at the top.
+    3. EXTRACT CONTENT: Extract the core bullet points or main text from each page. 
+    4. NO OVER-SUMMARIZATION: Do not merge 5 pages into 1 slide. Aim for a 1:1 or near 1:1 mapping between PDF pages and generated slides, unless a page is clearly just a duplicate or empty.
+    5. CLEANUP: Remove any artifacts from text extraction like page numbers in corners or repetitive headers/footers.
     
     Return a JSON object with a "slides" array. Respond ONLY with the JSON.
     
     Format:
     {
       "slides": [
-        { "title": "Slide Title", "content": "Point 1\nPoint 2\nPoint 3" },
+        { "title": "Slide Title", "content": "Bullet point 1\nBullet point 2\nBullet point 3" },
         ...
       ]
     }
