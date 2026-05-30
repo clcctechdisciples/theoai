@@ -18,15 +18,6 @@ export default async function Dashboard() {
           </div>
           <h1 className="text-6xl font-cinzel font-black text-cream tracking-tighter">Welcome, {session?.user?.name || 'Admin'}</h1>
           <p className="text-cream/40 mt-4 text-sm max-w-lg leading-relaxed font-medium">Theo AI is engaged and ready to assist with today's church experience. Select an engine to begin.</p>
-          
-          {process.env.VERCEL === '1' && !process.env.DATABASE_URL && (
-            <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl max-w-lg">
-              <p className="text-[10px] text-amber-200 uppercase font-black tracking-widest mb-1">⚠️ Storage Warning</p>
-              <p className="text-[10px] text-amber-200/60 leading-relaxed font-bold">
-                Running in ephemeral mode. On Vercel, your library and recordings will be cleared periodically. To enable permanent storage, please connect a database.
-              </p>
-            </div>
-          )}
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
