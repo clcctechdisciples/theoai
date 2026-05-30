@@ -25,10 +25,12 @@ export const authOptions: NextAuthOptions = {
             // Ensure admin exists in DB for foreign key relations
             try {
               const { upsertUser } = await import('./db')
+              const hashedPass = await bcrypt.hash(adminPass, 10)
+              console.log('Auth: Syncing admin user to DB with UUID:', ADMIN_ID)
               await upsertUser({
                 id: ADMIN_ID,
                 username: adminUser,
-                password: await bcrypt.hash(adminPass, 10)
+                password: hashedPass
               })
             } catch (e) { console.error('Admin sync error:', e) }
 
