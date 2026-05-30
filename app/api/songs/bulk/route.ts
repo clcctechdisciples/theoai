@@ -45,19 +45,21 @@ export async function POST(req: Request) {
     const apiKey = process.env.OPENROUTER_API_KEY
     if (!apiKey) throw new Error("AI Backend and API Key missing")
 
-    const prompt = `You are a professional music librarian for a church. Analyze the following text which contains a list of songs, setlists, or raw lyrics.
+    const prompt = `You are a professional music librarian for a church. Analyze the following text extracted from a file (likely a .txt or .pdf) which contains multiple songs, setlists, or raw lyrics.
     
     TASK:
-    1. EXTRACT: Find each individual song in the text.
-    2. IDENTIFY: Determine the correct title for each song.
-    3. CLEAN: Provide the full, clean lyrics. Remove any chord notations (e.g., [C], G7, Am), speaker names (e.g., "Pastor:"), or irrelevant metadata.
-    4. STRUCTURE: Break the lyrics into logical verses/choruses if possible, separated by single newlines.
+    1. EXTRACT: Find every distinct song within the text.
+    2. TITLE: Identify the official title for each song. If no title is clear, use the first unique line.
+    3. LYRICS: Provide the full, clean lyrics for each song. 
+       - REMOVE: Chord symbols (e.g. [C], G, Am7), guitar tabs, or metadata like "Intro", "Outro", "Chorus x2".
+       - CLEAN: Remove speaker names (e.g., "Pastor:", "Choir:").
+    4. VALIDATE: Ensure every song has both a title and non-empty lyrics.
     
     Return a JSON array of objects. Respond ONLY with the JSON array.
     
     Format:
     [
-      { "title": "Song Title", "lyrics": "Full lyrics text..." },
+      { "title": "Song Title", "lyrics": "Full clean lyrics text..." },
       ...
     ]
 
@@ -73,8 +75,12 @@ export async function POST(req: Request) {
         'X-Title': 'Theo AI'
       },
       body: JSON.stringify({
-        model: 'google/gemini-1.5-pro', 
-        messages: [{ role: 'system', content: 'You are a professional music librarian. Respond ONLY with valid JSON and no markdown formatting.' }, { role: 'user', content: prompt }],
+        model: 'google/gemini-2.0-flash-001', // Upgraded model for better extraction
+        messages: [
+          { role: 'system', content: 'You are a professional music librarian. You respond ONLY with a valid JSON array of song objects. No markdown, no explanations.' },
+          { role: 'user', content: prompt }
+        ],
+        response_format: { type: 'json_object' }
       })
     })
 
@@ -86,30 +92,48 @@ export async function POST(req: Request) {
     }
 
     let rawContent = data.choices[0].message.content.trim()
-    if (rawContent.startsWith('```')) {
-      rawContent = rawContent.replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim()
+    // Handle potential markdown blocks
+    if (rawContent.includes('```')) {
+      rawContent = rawContent.replace(/```json\s?/, '').replace(/```\s?/, '').trim()
     }
 
     let songs = []
     try {
-      songs = JSON.parse(rawContent)
-      // Sometimes AI wraps it in an object like { "songs": [...] }
-      if (!Array.isArray(songs) && songs.songs) songs = songs.songs
+      const parsed = JSON.parse(rawContent)
+      songs = Array.isArray(parsed) ? parsed : (parsed.songs || [])
     } catch (e) {
       console.error('Failed to parse AI JSON:', rawContent)
-      throw new Error("AI returned invalid JSON. Please try a smaller batch.")
+      throw new Error("AI returned invalid JSON. Please try a smaller batch or check the file format.")
     }
 
-    if (Array.isArray(songs)) {
-      for (const song of songs) {
-        if (song.title && song.lyrics) {
+    if (!Array.isArray(songs) || songs.length === 0) {
+      return NextResponse.json({ success: false, error: "No songs could be extracted from this file." })
+    }
+
+    let savedCount = 0
+    let failedCount = 0
+
+    for (const song of songs) {
+      if (song.title && song.lyrics && song.lyrics.trim().length > 10) {
+        try {
           await saveData(userId, 'songs', song)
+          savedCount++
+        } catch (saveErr) {
+          console.error(`Failed to save song "${song.title}":`, saveErr)
+          failedCount++
         }
+      } else {
+        failedCount++
       }
-      return NextResponse.json({ success: true, count: songs.length })
     }
 
-    return NextResponse.json({ success: false, error: 'No songs found in the processed text.' })
+    return NextResponse.json({ 
+      success: savedCount > 0, 
+      count: savedCount,
+      failed: failedCount,
+      total: songs.length,
+      message: savedCount > 0 ? `Successfully added ${savedCount} songs.` : "Failed to extract any valid songs."
+    })
   } catch (error: any) {
     console.error('Bulk Upload Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

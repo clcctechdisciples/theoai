@@ -87,12 +87,20 @@ export default function MediaEnginePage() {
               <h1 className="text-4xl font-cinzel font-black tracking-tighter text-cream uppercase">Media Engine</h1>
               <p className="text-cream/40 text-xs font-black uppercase tracking-[0.2em] mt-1">Pictures & Videos</p>
             </div>
-            <div className="relative">
-              <input type="file" multiple accept="image/*,video/*" onChange={handleUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              <button className="flex items-center gap-2 px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest bg-gold border border-gold text-dark-950 hover:bg-gold-light transition-all shadow-lg">
-                {uploading ? <div className="w-4 h-4 border-2 border-dark-950/30 border-t-dark-950 rounded-full animate-spin" /> : <FileUp className="w-4 h-4" />}
-                {uploading ? 'Uploading...' : 'Upload Media'}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => fetch('/api/control', { method: 'POST', body: JSON.stringify({ action: 'setMode', mode: 'idle' }) })}
+                className="bg-forest/20 border border-forest/30 hover:bg-forest/40 text-cream px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all"
+              >
+                Go Idle
               </button>
+              <div className="relative">
+                <input type="file" multiple accept="image/*,video/*" onChange={handleUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                <button className="flex items-center gap-2 px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest bg-gold border border-gold text-dark-950 hover:bg-gold-light transition-all shadow-lg">
+                  {uploading ? <div className="w-4 h-4 border-2 border-dark-950/30 border-t-dark-950 rounded-full animate-spin" /> : <FileUp className="w-4 h-4" />}
+                  {uploading ? 'Uploading...' : 'Upload Media'}
+                </button>
+              </div>
             </div>
           </div>
 

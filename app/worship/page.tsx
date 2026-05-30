@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { ChatWidget } from '@/components/ChatWidget'
-import { Edit2, Save, FolderOpen, ChevronLeft, ChevronRight, FileUp, Search, Pin, Plus, X } from 'lucide-react'
+import { Edit2, Save, FolderOpen, ChevronLeft, ChevronRight, FileUp, Search, Pin, Plus, X, Trash2 } from 'lucide-react'
 
 export default function WorshipPage() {
   const [globalState, setGlobalState] = useState({ mode: 'idle', lyricLines: [] as string[], lyricSection: '' })
@@ -77,11 +77,42 @@ export default function WorshipPage() {
     
     setBulkLoading(true)
     try {
-      const text = await file.text()
+      let text = ''
+      
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        console.log('Processing bulk PDF song file:', file.name)
+        try {
+          const pdfjs = await import('pdfjs-dist')
+          pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`
+          
+          const arrayBuffer = await file.arrayBuffer()
+          const loadingTask = pdfjs.getDocument({ data: arrayBuffer })
+          const pdf = await loadingTask.promise
+          
+          let fullText = ''
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i)
+            const textContent = await page.getTextContent()
+            const pageText = textContent.items.map((item: any) => item.str).join(' ')
+            fullText += pageText + '\n\n'
+          }
+          text = fullText
+        } catch (pdfErr) {
+          console.error('Error extracting text from PDF:', pdfErr)
+          throw new Error('Failed to read PDF content. Please ensure it is a text-based PDF.')
+        }
+      } else {
+        text = await file.text()
+      }
+
+      if (!text.trim()) {
+        throw new Error('The file appears to be empty or unreadable.')
+      }
+
       const res = await fetch('/api/songs/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text })
+        body: JSON.stringify({ content: text, fileName: file.name })
       })
       const data = await res.json()
       if (data.success) {
@@ -90,13 +121,34 @@ export default function WorshipPage() {
       } else {
         alert('Failed to process file: ' + data.error)
       }
-    } catch (e) {
-      alert('Error reading file.')
+    } catch (e: any) {
+      alert(e.message || 'Error processing bulk upload.')
     }
     setBulkLoading(false)
   }
 
   const [saving, setSaving] = useState(false)
+
+  const deleteSong = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('Are you sure you want to delete this song? This action cannot be undone.')) return
+    
+    try {
+      const res = await fetch('/api/songs', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      if (res.ok) {
+        setLibrary(library.filter(s => s.id !== id))
+        setSongQueue(songQueue.filter(q => q.id !== id))
+      } else {
+        alert('Failed to delete song.')
+      }
+    } catch (e) {
+      alert('Error deleting song.')
+    }
+  }
 
   const saveToLibrary = async () => {
     if (!songTitle.trim()) return alert('Please enter a Song Title to save.')
@@ -271,18 +323,27 @@ export default function WorshipPage() {
                     <h3 className="font-bold text-cream text-sm truncate pr-6">{song.title}</h3>
                     <span className="text-[10px] uppercase text-gold-light mt-1 block">Saved Song</span>
                     
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!songQueue.find(q => q.id === song.id)) {
-                          setSongQueue([...songQueue, song]);
-                        }
-                      }}
-                      className="absolute top-2 right-2 p-1.5 bg-forest/20 border border-forest/30 rounded-lg text-gold opacity-0 group-hover:opacity-100 transition-all hover:bg-gold hover:text-dark-950"
-                      title="Add to Sunday Queue"
-                    >
-                      <Pin className="w-3 h-3" />
-                    </button>
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!songQueue.find(q => q.id === song.id)) {
+                            setSongQueue([...songQueue, song]);
+                          }
+                        }}
+                        className="p-1.5 bg-forest/20 border border-forest/30 rounded-lg text-gold hover:bg-gold hover:text-dark-950"
+                        title="Add to Sunday Queue"
+                      >
+                        <Pin className="w-3 h-3" />
+                      </button>
+                      <button 
+                        onClick={(e) => deleteSong(song.id, e)}
+                        className="p-1.5 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500 hover:text-white"
+                        title="Delete Song"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {library.length === 0 && <p className="text-sm text-cream/50 col-span-full py-10 text-center">No songs saved yet.</p>}

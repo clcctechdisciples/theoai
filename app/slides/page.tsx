@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
-import { FileUp, Play, ChevronLeft, ChevronRight, Layers, Presentation, Trash2, Eye } from 'lucide-react'
+import { FileUp, Play, ChevronLeft, ChevronRight, Layers, Presentation, Trash2 } from 'lucide-react'
 
 export default function SlidesPage() {
   const [slides, setSlides] = useState<any[]>([])
@@ -48,19 +48,29 @@ export default function SlidesPage() {
 
             for (let i = 1; i <= pdf.numPages; i++) {
               const page = await pdf.getPage(i)
-              const viewport = page.getViewport({ scale: 2.0 })
+              
+              // Use a higher scale for better quality, but maintain aspect ratio
+              const scale = 2.5
+              const viewport = page.getViewport({ scale })
+              
               const canvas = document.createElement('canvas')
               const context = canvas.getContext('2d')
-              canvas.height = viewport.height
-              canvas.width = viewport.width
               
               if (context) {
+                // Ensure canvas size matches viewport exactly
+                canvas.height = viewport.height
+                canvas.width = viewport.width
+                
+                // Clear canvas before rendering
+                context.clearRect(0, 0, canvas.width, canvas.height)
+                
                 await (page as any).render({ 
                   canvasContext: context, 
-                  viewport,
-                  canvas: canvas 
+                  viewport: viewport,
+                  enableWebGL: true // Use WebGL if possible for better rendering
                 }).promise
-                const dataUrl = canvas.toDataURL('image/png')
+                
+                const dataUrl = canvas.toDataURL('image/png', 1.0)
                 const response = await fetch(dataUrl)
                 const blob = await response.blob()
                 processedFiles.push({ file: blob, name: `${file.name.replace('.pdf', '')}-page-${i}.png` })
@@ -142,6 +152,12 @@ export default function SlidesPage() {
               <p className="text-cream/40 text-xs font-black uppercase tracking-[0.2em] mt-1">Presentation Engine</p>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => fetch('/api/control', { method: 'POST', body: JSON.stringify({ action: 'setMode', mode: 'idle' }) })}
+                className="bg-forest/20 border border-forest/30 hover:bg-forest/40 text-cream px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all"
+              >
+                Go Idle
+              </button>
               <div className="relative">
                 <input type="file" multiple accept="image/*,.pdf,.pptx" onChange={handleUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 <button className="flex items-center gap-2 px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest bg-gold border border-gold text-dark-950 hover:bg-gold-light transition-all shadow-lg glow-accent">
