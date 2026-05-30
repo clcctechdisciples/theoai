@@ -47,8 +47,8 @@ export default function SlidesPage() {
             for (let i = 1; i <= pdf.numPages; i++) {
               const page = await pdf.getPage(i)
               
-              // Use a very high scale for crystal clear snapshots (4k-ish)
-              const scale = 3.5
+              // Use a balanced scale for clarity and performance
+              const scale = 2.0
               const viewport = page.getViewport({ scale })
               
               const canvas = document.createElement('canvas')
@@ -58,7 +58,6 @@ export default function SlidesPage() {
                 canvas.height = viewport.height
                 canvas.width = viewport.width
                 
-                // Ensure a clean white background (in case PDF is transparent)
                 context.fillStyle = 'white'
                 context.fillRect(0, 0, canvas.width, canvas.height)
                 
@@ -68,34 +67,52 @@ export default function SlidesPage() {
                   enableWebGL: true
                 }).promise
                 
-                const dataUrl = canvas.toDataURL('image/png', 1.0)
+                // Use JPEG for significantly smaller file sizes
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
                 const response = await fetch(dataUrl)
                 const blob = await response.blob()
-                processedFiles.push({ file: blob, name: `Slide ${i}.png` })
+                
+                // Upload slide immediately to avoid memory issues with large PDFs
+                const formData = new FormData()
+                formData.append('files', blob, `Slide ${i}.jpg`)
+                
+                console.log(`Uploading slide ${i}...`)
+                const res = await fetch('/api/slides/upload', {
+                  method: 'POST',
+                  body: formData
+                })
+                
+                const data = await res.json()
+                if (data.success && data.slides) {
+                  setSlides(prev => [...prev, ...data.slides])
+                }
               }
             }
+            setUploading(false)
+            return // Exit after successful sequential upload
           } catch (pdfErr) {
             console.error('PDF Snap error:', pdfErr)
-            alert('Failed to snap PDF pages. Attempting standard upload...')
-            processedFiles.push({ file, name: file.name })
+            alert('Failed to process PDF. It might be too large or protected.')
           }
         } else {
           processedFiles.push({ file, name: file.name })
         }
       }
 
-      const formData = new FormData()
-      processedFiles.forEach(pf => formData.append('files', pf.file, pf.name))
+      if (processedFiles.length > 0) {
+        const formData = new FormData()
+        processedFiles.forEach(pf => formData.append('files', pf.file, pf.name))
 
-      const res = await fetch('/api/slides/upload', {
-        method: 'POST',
-        body: formData
-      })
-      const data = await res.json()
-      if (data.success) {
-        setSlides([...slides, ...data.slides])
-      } else {
-        alert('Upload failed: ' + data.error)
+        const res = await fetch('/api/slides/upload', {
+          method: 'POST',
+          body: formData
+        })
+        const data = await res.json()
+        if (data.success) {
+          setSlides([...slides, ...data.slides])
+        } else {
+          alert('Upload failed: ' + data.error)
+        }
       }
     } catch (e: any) {
       console.error('Upload error:', e)
