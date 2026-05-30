@@ -96,25 +96,35 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
   checkDb()
   if (key === 'songs') {
     // Check if song with same title exists for this user
-    const { data: existing } = await supabaseAdmin
+    const { data: existing, error: findError } = await supabaseAdmin
       .from('songs')
       .select('*')
       .eq('userId', userId)
       .eq('title', value.title)
-      .single()
+      .maybeSingle()
+
+    if (findError) {
+      console.error('Error finding song:', findError)
+      throw findError
+    }
 
     const lyricsStr = Array.isArray(value.lyrics) ? value.lyrics.join('\n') : value.lyrics
 
     if (existing) {
+      console.log('Updating existing song:', existing.id)
       const { data, error } = await supabaseAdmin
         .from('songs')
         .update({ lyrics: lyricsStr, updatedAt: new Date().toISOString() })
         .eq('id', existing.id)
         .select()
         .single()
-      if (error) throw error
+      if (error) {
+        console.error('Error updating song:', error)
+        throw error
+      }
       return data
     } else {
+      console.log('Inserting new song for user:', userId)
       const { data, error } = await supabaseAdmin
         .from('songs')
         .insert({
@@ -124,7 +134,10 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
         })
         .select()
         .single()
-      if (error) throw error
+      if (error) {
+        console.error('Error inserting song:', error)
+        throw error
+      }
       return data
     }
   } else if (key === 'backgrounds') {
@@ -146,10 +159,12 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
       return data
     }
   } else if (key === 'slides') {
+    console.log('Saving slide for user:', userId)
     // If value.url is a data URI, upload to Supabase Storage instead
     let finalUrl = value.url
     if (value.url.startsWith('data:')) {
       try {
+        console.log('Detected Data URI, uploading to Storage bucket: slides')
         const [header, base64Data] = value.url.split(',')
         const mime = header.split(':')[1].split(';')[0]
         const ext = mime.split('/')[1] || 'png'
@@ -164,7 +179,10 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
             upsert: true
           })
 
-        if (uploadError) throw uploadError
+        if (uploadError) {
+          console.error('Supabase Storage upload error:', uploadError)
+          throw uploadError
+        }
 
         const { data: { publicUrl } } = supabaseAdmin
           .storage
@@ -172,6 +190,7 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
           .getPublicUrl(fileName)
         
         finalUrl = publicUrl
+        console.log('Slide uploaded successfully to Storage:', finalUrl)
       } catch (e) {
         console.error('Error uploading slide to storage:', e)
         // Fallback to data URI if storage fails
@@ -188,7 +207,10 @@ export async function saveData(userId: string, key: 'songs' | 'backgrounds' | 'a
       .select()
       .single()
     
-    if (error) throw error
+    if (error) {
+      console.error('Error inserting slide into DB:', error)
+      throw error
+    }
     return data
   }
 }

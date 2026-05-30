@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
-import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
 import { Edit2, Save, FolderOpen, ChevronLeft, ChevronRight, FileUp, Search, Pin, Plus, X } from 'lucide-react'
 
@@ -70,44 +69,6 @@ export default function WorshipPage() {
       method: 'POST',
       body: JSON.stringify({ action: 'setLyrics', lines: verseLines, section: `Verse ${idx + 1}` })
     })
-  }
-
-  const handleTranscript = async (text: string) => {
-    try {
-      const res = await fetch('/api/ai-process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: text, mode: 'worship' })
-      })
-      const data = await res.json()
-
-      if (data.type === 'lyrics' && data.content.lines?.length > 0) {
-        await fetch('/api/control', {
-          method: 'POST',
-          body: JSON.stringify({ 
-            action: 'setLyrics', 
-            lines: data.content.lines, 
-            section: 'AI Detected Lyrics' 
-          })
-        })
-      } else if (data.type === 'scripture' && data.content.reference) {
-        await fetch('/api/control', {
-          method: 'POST',
-          body: JSON.stringify({ 
-            action: 'setScripture', 
-            scripture: { reference: data.content.reference, text: data.content.text } 
-          })
-        })
-      }
-    } catch (e) {
-      console.error('AI worship detection error:', e)
-      // Fallback to basic display if AI fails
-      const fallbackLines = [text.substring(0, 35), text.substring(35, 70)]
-      await fetch('/api/control', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'setLyrics', lines: fallbackLines.filter(l => l.trim().length > 0), section: 'Live Audio' })
-      })
-    }
   }
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -362,9 +323,7 @@ export default function WorshipPage() {
             </div>
           </div>
 
-          <AudioEngine mode="worship" onTranscript={handleTranscript} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Editor Panel */}
             <div className="glass-card rounded-2xl p-6 border border-gold/20 flex flex-col">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-5">

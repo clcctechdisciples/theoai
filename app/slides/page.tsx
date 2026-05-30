@@ -33,11 +33,15 @@ export default function SlidesPage() {
         if (file.type === 'application/pdf') {
           // Convert PDF to images
           const pdfjs = await import('pdfjs-dist')
-          pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+          // Using a more reliable worker source
+          pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
           
           const arrayBuffer = await file.arrayBuffer()
-          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
+          const loadingTask = pdfjs.getDocument({ data: arrayBuffer })
+          const pdf = await loadingTask.promise
           
+          console.log(`Processing PDF with ${pdf.numPages} pages`)
+
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i)
             const viewport = page.getViewport({ scale: 2.0 })
@@ -53,10 +57,15 @@ export default function SlidesPage() {
                 canvas: canvas 
               }).promise
               const dataUrl = canvas.toDataURL('image/png')
-              const blob = await (await fetch(dataUrl)).blob()
+              const response = await fetch(dataUrl)
+              const blob = await response.blob()
               processedFiles.push({ file: blob, name: `${file.name}-page-${i}.png` })
             }
           }
+        } else if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || file.name.endsWith('.pptx')) {
+          // For PPTX, we can't easily convert on client without heavy libs
+          // We will send it to the server and let the user know if it's not supported yet
+          processedFiles.push({ file, name: file.name })
         } else {
           processedFiles.push({ file, name: file.name })
         }

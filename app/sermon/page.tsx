@@ -1,18 +1,10 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { Sidebar } from '@/components/Sidebar'
-import { AudioEngine } from '@/components/AudioEngine'
 import { ChatWidget } from '@/components/ChatWidget'
-import { FileText, Download, CheckCircle2, FileDown, BookOpen, Search, Plus, Trash2, Maximize, Eye, EyeOff, X } from 'lucide-react'
-import { detectScripture } from '@/lib/scriptureDetector'
+import { BookOpen, Search, Trash2, Eye, X } from 'lucide-react'
 
 export default function SermonPage() {
-  const [globalMode, setGlobalMode] = useState('idle')
-  const [transcript, setTranscript] = useState('')
-  const [interimTranscript, setInterimTranscript] = useState('')
-  const [generating, setGenerating] = useState(false)
-  const [summary, setSummary] = useState<string | null>(null)
-  const [pendingAudioBlob, setPendingAudioBlob] = useState<Blob | null>(null)
   const [detectedScripture, setDetectedScripture] = useState<string | null>(null)
   const [scriptureToast, setScriptureToast] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -33,117 +25,7 @@ export default function SermonPage() {
     localStorage.setItem('theoai_bible_queue', JSON.stringify(newQueue))
   }
 
-  const endRef = useRef<HTMLDivElement>(null)
   const lastPushedRef = useRef<string>('')
-
-  useEffect(() => {
-    fetch('/api/control').then(r => r.json()).then(d => setGlobalMode(d.mode))
-  }, [])
-
-  const [isNearBottom, setIsNearBottom] = useState(true)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-
-  const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
-      const atBottom = scrollHeight - scrollTop - clientHeight < 50
-      setIsNearBottom(atBottom)
-    }
-  }
-
-  useEffect(() => {
-    if (isNearBottom) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [transcript, interimTranscript, isNearBottom])
-
-  const handleRecordingComplete = async (blob: Blob) => {
-    setPendingAudioBlob(blob)
-    
-    // Auto-archive sermon audio
-    const formData = new FormData()
-    const sessionId = Math.random().toString(36).substring(7)
-    formData.append('audio', blob, 'sermon.mp4')
-    formData.append('type', 'sermon')
-    formData.append('mode', 'sermon')
-    formData.append('sessionId', sessionId)
-    formData.append('title', `Sermon ${new Date().toLocaleString()}`)
-    
-    try {
-      const res = await fetch('/api/recordings/upload', {
-        method: 'POST',
-        body: formData
-      })
-      if (!res.ok) throw new Error(await res.text())
-      console.log('Sermon auto-archived successfully')
-    } catch (e) {
-      console.error('Failed to auto-archive sermon audio:', e)
-    }
-  }
-
-  const handleTranscript = async (text: string, isFinal?: boolean) => {
-    if (isFinal) {
-      const newTranscript = transcript + ' ' + text + '.'
-      setTranscript(newTranscript)
-      setInterimTranscript('')
-
-      // AI Injected Detection
-      try {
-        const res = await fetch('/api/ai-process', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transcript: text, mode: 'sermon' })
-        })
-        const data = await res.json()
-        
-        if (data.type === 'scripture' && data.content.reference) {
-          const ref = data.content.reference
-          if (ref !== lastPushedRef.current) {
-            lastPushedRef.current = ref
-            setDetectedScripture(ref)
-            setScriptureToast(ref)
-            setTimeout(() => setScriptureToast(null), 5000)
-
-            const scriptureData = { reference: ref, text: data.content.text }
-            
-            // Auto-add to queue if not present
-            if (!bibleQueue.some(v => v.reference === ref)) {
-              saveQueue([scriptureData, ...bibleQueue].slice(0, 20))
-            }
-
-            await fetch('/api/control', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'setScripture', scripture: scriptureData })
-            })
-          }
-        }
-      } catch (e) {
-        console.error('AI injection error:', e)
-        // Fallback to simple regex
-        const ref = detectScripture(text)
-        if (ref && ref !== lastPushedRef.current) {
-          lastPushedRef.current = ref
-          setDetectedScripture(ref)
-          setScriptureToast(ref)
-          setTimeout(() => setScriptureToast(null), 5000)
-          fetch(`/api/bible?ref=${encodeURIComponent(ref)}&translation=${bibleVersion}`)
-            .then(r => r.json())
-            .then(d => {
-              if (d.reference && d.text) {
-                fetch('/api/control', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ action: 'setScripture', scripture: { reference: d.reference, text: d.text } })
-                })
-              }
-            })
-        }
-      }
-    } else {
-      setInterimTranscript(text)
-    }
-  }
 
   const searchVerse = async () => {
     if (!searchQuery.trim()) return
@@ -200,86 +82,6 @@ export default function SermonPage() {
     saveQueue(next)
   }
 
-  const downloadPDF = async () => {
-    if (!summary) return
-    const { jsPDF } = await import('jspdf')
-    const doc = new jsPDF()
-    
-    const lines = summary.split('\n')
-    let y = 20
-    const margin = 20
-    const pageWidth = doc.internal.pageSize.getWidth()
-    const contentWidth = pageWidth - (margin * 2)
-
-    doc.setFontSize(22)
-    doc.text('Sermon Summary', margin, y)
-    y += 15
-
-    doc.setFontSize(12)
-    lines.forEach(line => {
-      if (y > 270) {
-        doc.addPage()
-        y = 20
-      }
-
-      if (line.match(/^#+\s/)) {
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(16)
-        y += 5
-        doc.text(line.replace(/^#+\s/, ''), margin, y)
-        y += 10
-        doc.setFont('helvetica', 'normal')
-        doc.setFontSize(12)
-      } else if (line.trim() === '') {
-        y += 5
-      } else {
-        const splitText = doc.splitTextToSize(line, contentWidth)
-        doc.text(splitText, margin, y)
-        y += (splitText.length * 7)
-      }
-    })
-
-    doc.save(`Sermon-Summary-${new Date().toISOString().split('T')[0]}.pdf`)
-  }
-
-  const generateSummary = async () => {
-    if (!transcript) return alert('No transcript available to summarize.')
-    setGenerating(true)
-    try {
-      const res = await fetch('/api/sermon-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript })
-      })
-      const data = await res.json()
-      if (data.summary) {
-        setSummary(data.summary)
-
-        let derivedTitle = 'Theo-Sermon'
-        const titleMatch = data.summary.match(/^#+\s(.*?)$/m)
-        if (titleMatch && titleMatch[1]) {
-           derivedTitle = titleMatch[1].trim().replace(/[^a-zA-Z0-9 -]/g, '')
-        }
-
-        if (pendingAudioBlob) {
-           const url = URL.createObjectURL(pendingAudioBlob)
-           const a = document.createElement('a')
-           a.style.display = 'none'
-           a.href = url
-           a.download = `${derivedTitle}-${new Date().toISOString().split('T')[0]}.mp4`
-           document.body.appendChild(a)
-           a.click()
-           setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 100)
-           setPendingAudioBlob(null)
-        }
-
-      } else {
-        alert('Failed to generate summary.')
-      }
-    } catch(e) { console.error(e) }
-    setGenerating(false)
-  }
-
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -308,233 +110,142 @@ export default function SermonPage() {
             </div>
           )}
 
-          <AudioEngine mode="sermon" onTranscript={handleTranscript} onRecordingComplete={handleRecordingComplete} />
-
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
-            {/* Live Transcript Log */}
-            <div className="lg:col-span-2 flex flex-col gap-6">
-              <div className="glass-card rounded-2xl flex-1 flex flex-col border border-forest/30 overflow-hidden min-h-[300px]">
-                <div className="p-4 border-b border-forest/30 bg-forest-700/30 flex justify-between items-center">
-                  <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-cream flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gold-light" /> Transcript
-                  </h2>
-                  <div className="flex items-center gap-3">
-                    {detectedScripture && (
-                      <span className="text-[10px] font-black text-gold bg-gold/10 px-2 py-1 rounded-full border border-gold/30">
-                        📖 {detectedScripture}
-                      </span>
-                    )}
-                    {transcript && <div className="text-[10px] font-black text-cream/40 uppercase tracking-widest bg-dark-950 px-3 py-1 rounded-full">{transcript.split(' ').length} words</div>}
-                  </div>
-                </div>
-                <div 
-                  ref={scrollContainerRef}
-                  onScroll={handleScroll}
-                  className="p-6 overflow-y-auto flex-1 font-inter text-cream/80 leading-relaxed text-lg bg-dark/40"
-                >
-                  {transcript || interimTranscript ? (
-                    <p>
-                      {transcript}
-                      <span className="text-cream/40 italic ml-2">{interimTranscript}</span>
-                    </p>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-cream/30 italic">
-                      Start the audio engine to begin transcribing...
-                    </div>
-                  )}
-                  <div ref={endRef} />
-                </div>
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Bible Controller - Full Width */}
+            <div className="glass-card rounded-2xl flex flex-col border border-forest/30 overflow-hidden flex-1">
+              <div className="p-4 border-b border-forest/30 bg-forest-700/30 flex justify-between items-center">
+                <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-cream flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-gold-light" /> Bible Controller
+                </h2>
+                <span className="text-[10px] font-black text-cream/30 uppercase tracking-widest">{bibleQueue.length} Stored</span>
               </div>
-
-              {/* Bible Controller (Now part of the main grid) */}
-              <div className="glass-card rounded-2xl flex flex-col border border-forest/30 overflow-hidden h-[400px]">
-                <div className="p-4 border-b border-forest/30 bg-forest-700/30 flex justify-between items-center">
-                  <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-cream flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-gold-light" /> Bible Controller
-                  </h2>
-                  <span className="text-[10px] font-black text-cream/30 uppercase tracking-widest">{bibleQueue.length} Stored</span>
-                </div>
-                <div className="p-6 space-y-6 flex-1 flex flex-col min-h-0">
-                  <div className="flex gap-3 shrink-0">
-                    <div className="flex-[2] bg-black/40 border border-forest/30 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-gold/50 transition-all">
-                      <Search className="w-4 h-4 text-gold" />
-                      <input 
-                        placeholder="Search verse (e.g. Romans 8:28)" 
-                        className="bg-transparent border-none text-cream focus:outline-none text-sm w-full font-bold"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && searchVerse()}
-                      />
-                    </div>
-                    <select 
-                      value={bibleVersion}
-                      onChange={e => setBibleVersion(e.target.value)}
-                      className="flex-1 bg-black/60 border border-forest/40 rounded-xl px-2 text-[10px] font-black uppercase text-gold cursor-pointer focus:outline-none focus:border-gold/50 appearance-none text-center hover:bg-black/80 transition-all"
-                    >
-                      <option value="kjv" className="bg-forest-950 text-gold">KJV (King James)</option>
-                      <option value="nlt" className="bg-forest-950 text-gold">NLT (New Living Translation)</option>
-                      <option value="niv" className="bg-forest-950 text-gold">NIV (New International Version)</option>
-                      <option value="amp" className="bg-forest-950 text-gold">AMP (Amplified Bible)</option>
-                      <option value="asv" className="bg-forest-950 text-gold">ASV (American Standard)</option>
-                      <option value="web" className="bg-forest-950 text-gold">WEB (World English)</option>
-                      <option value="bbe" className="bg-forest-950 text-gold">BBE (Basic English)</option>
-                      <option value="almeida" className="bg-forest-950 text-gold">ALMEIDA (Portuguese)</option>
-                    </select>
-                    <button onClick={searchVerse} className="bg-forest px-6 py-3 rounded-xl text-cream text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Project</button>
+              <div className="p-6 space-y-6 flex-1 flex flex-col min-h-0">
+                <div className="flex gap-3 shrink-0">
+                  <div className="flex-[2] bg-black/40 border border-forest/30 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-gold/50 transition-all">
+                    <Search className="w-4 h-4 text-gold" />
+                    <input 
+                      placeholder="Search verse (e.g. Romans 8:28)" 
+                      className="bg-transparent border-none text-cream focus:outline-none text-sm w-full font-bold"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && searchVerse()}
+                    />
                   </div>
-                  
-                  {chapterVerses && (
-                    <div className="bg-forest-950/50 border border-gold/30 rounded-2xl overflow-hidden flex flex-row h-[300px] animate-in fade-in slide-in-from-top-2 duration-300">
-                      {/* Left: Numbers */}
-                      <div className="w-full md:w-1/3 p-4 border-b md:border-b-0 md:border-r border-gold/10 flex flex-col">
-                        <div className="flex justify-between items-center mb-3">
-                          <h3 className="text-[10px] font-black uppercase tracking-widest text-gold">{chapterVerses.reference}</h3>
-                          <button onClick={() => setChapterVerses(null)} className="text-[10px] font-black uppercase text-cream/40 hover:text-cream md:hidden">Close</button>
-                        </div>
-                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
-                          {chapterVerses.verses.map((v, i) => {
-                            const isSelected = selectedChapterVerse?.verse === v.verse
-                            return (
-                              <button
-                                key={i}
-                                onClick={() => setSelectedChapterVerse(v)}
-                                className={`aspect-square flex items-center justify-center border rounded-lg text-[10px] font-bold transition-all ${isSelected ? 'bg-gold text-dark-950 border-gold' : 'bg-dark-900 border-white/5 text-cream/60 hover:bg-gold/20 hover:text-gold'}`}
-                              >
-                                {v.verse}
-                              </button>
-                            )
-                          })}
-                        </div>
+                  <select 
+                    value={bibleVersion}
+                    onChange={e => setBibleVersion(e.target.value)}
+                    className="flex-1 bg-black/60 border border-forest/40 rounded-xl px-2 text-[10px] font-black uppercase text-gold cursor-pointer focus:outline-none focus:border-gold/50 appearance-none text-center hover:bg-black/80 transition-all"
+                  >
+                    <option value="kjv" className="bg-forest-950 text-gold">KJV (King James)</option>
+                    <option value="nlt" className="bg-forest-950 text-gold">NLT (New Living Translation)</option>
+                    <option value="niv" className="bg-forest-950 text-gold">NIV (New International Version)</option>
+                    <option value="amp" className="bg-forest-950 text-gold">AMP (Amplified Bible)</option>
+                    <option value="asv" className="bg-forest-950 text-gold">ASV (American Standard)</option>
+                    <option value="web" className="bg-forest-950 text-gold">WEB (World English)</option>
+                    <option value="bbe" className="bg-forest-950 text-gold">BBE (Basic English)</option>
+                    <option value="almeida" className="bg-forest-950 text-gold">ALMEIDA (Portuguese)</option>
+                  </select>
+                  <button onClick={searchVerse} className="bg-forest px-6 py-3 rounded-xl text-cream text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Project</button>
+                </div>
+                
+                {chapterVerses && (
+                  <div className="bg-forest-950/50 border border-gold/30 rounded-2xl overflow-hidden flex flex-row h-[300px] animate-in fade-in slide-in-from-top-2 duration-300">
+                    {/* Left: Numbers */}
+                    <div className="w-full md:w-1/3 p-4 border-b md:border-b-0 md:border-r border-gold/10 flex flex-col">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-gold">{chapterVerses.reference}</h3>
+                        <button onClick={() => setChapterVerses(null)} className="text-[10px] font-black uppercase text-cream/40 hover:text-cream md:hidden">Close</button>
                       </div>
-                      
-                      {/* Right: Bible Box */}
-                      <div className="w-full md:w-2/3 p-4 bg-dark/20 flex flex-col relative">
-                        <div className="hidden md:block absolute top-4 right-4">
-                          <button onClick={() => setChapterVerses(null)} className="text-cream/20 hover:text-cream"><X className="w-4 h-4"/></button>
-                        </div>
-                        <div className="flex flex-col h-full">
-                           <div className="text-[8px] font-black uppercase tracking-widest text-gold/30 mb-3">Bible Box Preview</div>
-                           {selectedChapterVerse ? (
-                             <div className="flex-1 flex flex-col justify-center animate-fade-in">
-                               <p className="text-sm text-cream font-bold leading-relaxed mb-4 line-clamp-4 italic">"{selectedChapterVerse.text}"</p>
-                               <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-                                 <span className="text-[9px] font-black text-gold uppercase tracking-widest">{chapterVerses.reference}:{selectedChapterVerse.verse}</span>
-                                 <button 
-                                   onClick={() => {
-                                     const newVerse = { reference: `${chapterVerses.reference}:${selectedChapterVerse.verse} (${bibleVersion.toUpperCase()})`, text: selectedChapterVerse.text }
-                                     if (!bibleQueue.some(q => q.reference === newVerse.reference)) {
-                                       saveQueue([newVerse, ...bibleQueue])
-                                     }
-                                     projectStoredVerse(newVerse)
-                                   }}
-                                   className="bg-gold text-dark-950 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:brightness-110 transition-all"
-                                 >
-                                   Project
-                                 </button>
-                               </div>
-                             </div>
-                           ) : (
-                             <div className="flex-1 flex flex-col items-center justify-center opacity-20">
-                               <Search className="w-8 h-8 mb-2" />
-                               <p className="text-[8px] font-black uppercase tracking-widest">Select Verse</p>
-                             </div>
-                           )}
-                        </div>
+                      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
+                        {chapterVerses.verses.map((v, i) => {
+                          const isSelected = selectedChapterVerse?.verse === v.verse
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => setSelectedChapterVerse(v)}
+                              className={`aspect-square flex items-center justify-center border rounded-lg text-[10px] font-bold transition-all ${isSelected ? 'bg-gold text-dark-950 border-gold' : 'bg-dark-900 border-white/5 text-cream/60 hover:bg-gold/20 hover:text-gold'}`}
+                            >
+                              {v.verse}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
-                  )}
-                  
-                  <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
-
-                    {bibleQueue.map((v, i) => {
-                      const isProjected = detectedScripture === v.reference
-                      return (
-                        <div 
-                          key={i} 
-                          onClick={() => projectStoredVerse(v)}
-                          className={`bg-dark-950/40 border p-4 rounded-xl group transition-all cursor-pointer select-none ${isProjected ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30 hover:bg-white/5'}`}
-                          title="Tap to Project"
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isProjected ? 'text-gold' : 'text-gold/60'}`}>{v.reference}</span>
-                            <div className="flex gap-1 items-center">
-                               <button 
-                                 onClick={(e) => { e.stopPropagation(); removeFromQueue(i) }}
-                                 className="p-1.5 rounded-lg transition-all text-red-500/50 hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100"
-                                 title="Remove from Queue"
-                               >
-                                 <Trash2 className="w-4 h-4" />
-                               </button>
-                               <div className={`p-1.5 rounded-lg transition-all ${isProjected ? 'bg-gold text-dark-950' : 'text-cream/20 group-hover:text-gold/40'}`}>
-                                 {isProjected ? <Eye className="w-4 h-4"/> : <div className="w-4 h-4" />}
-                               </div>
-                            </div>
-                          </div>
-                          <p className={`text-sm leading-relaxed ${isProjected ? 'text-cream font-bold' : 'text-cream/70 line-clamp-2'}`}>{v.text}</p>
-                        </div>
-                      )
-                    })}
-                    {bibleQueue.length === 0 && (
-                      <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
-                        <BookOpen className="w-12 h-12 mb-2" />
-                        <p className="text-[10px] uppercase font-black tracking-widest">Queue Empty</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Smart Summary Panel */}
-            <div className="glass-card rounded-2xl flex flex-col border border-gold/20 overflow-hidden relative">
-              <div className="p-4 border-b border-gold/20 bg-dark-950/50 flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full border border-gold flex items-center justify-center bg-gold/10">
-                  <img src="/logo.png" className="w-3 h-3 grayscale brightness-200" alt=""/>
-                </div>
-                <h2 className="font-cinzel text-xs font-black uppercase tracking-[0.2em] text-gold-light">Theo Summary Engine</h2>
-              </div>
-              
-              <div className="flex-1 p-6 overflow-y-auto">
-                {!summary ? (
-                   <div className="text-center mt-10">
-                    <p className="text-sm text-cream/60 mb-6">Theo will process the raw transcript into key points, theological themes, and detected scriptures.</p>
-                    <button 
-                      onClick={generateSummary}
-                      disabled={generating || !transcript}
-                      className="w-full forest-gradient text-cream font-bold py-3 rounded-lg shadow-lg hover:brightness-110 disabled:opacity-50 disabled:grayscale transition-all flex items-center justify-center gap-2"
-                    >
-                      {generating ? <div className="w-5 h-5 border-2 border-cream/30 border-t-cream rounded-full animate-spin"/> : <FileDown className="w-5 h-5"/>}
-                      {generating ? 'Synthesizing...' : 'Generate PDF Summary'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4 animate-fade-in relative">
-                    <div className="absolute -top-4 -right-2 text-green-400">
-                      <CheckCircle2 className="w-8 h-8 opacity-50" />
-                    </div>
-                    {summary.split('\n').map((line, i) => {
-                      if (line.match(/^#+\s/)) {
-                         return <h3 key={i} className="font-cinzel font-bold text-gold text-lg mt-6 mb-2 border-b border-gold/20 pb-1">{line.replace(/^#+\s/, '')}</h3>
-                      }
-                      if (line.trim() === '') return <div key={i} className="h-2"/>
-                      if (line.match(/^[1-4]\./)) {
-                        return <h4 key={i} className="font-bold text-forest-light uppercase tracking-wider text-xs mt-4 mb-2">{line}</h4>
-                      }
-                      if (line.startsWith('*') || line.startsWith('-')) {
-                        return <li key={i} className="text-sm text-cream/80 ml-4 mb-1 list-disc">{line.replace(/^[-*]\s/, '')}</li>
-                      }
-                      return <p key={i} className="text-sm text-cream/90">{line}</p>
-                    })}
                     
-                    <button 
-                      onClick={downloadPDF}
-                      className="mt-8 w-full bg-dark border border-gold/40 text-gold-light font-bold py-3 rounded-lg hover:bg-gold/10 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Download className="w-4 h-4"/> Download PDF Summary
-                    </button>
-                    <p className="text-center text-[10px] text-cream/30 uppercase mt-2">Professional PDF Export Generated by Theo</p>
+                    {/* Right: Bible Box */}
+                    <div className="w-full md:w-2/3 p-4 bg-dark/20 flex flex-col relative">
+                      <div className="hidden md:block absolute top-4 right-4">
+                        <button onClick={() => setChapterVerses(null)} className="text-cream/20 hover:text-cream"><X className="w-4 h-4"/></button>
+                      </div>
+                      <div className="flex flex-col h-full">
+                         <div className="text-[8px] font-black uppercase tracking-widest text-gold/30 mb-3">Bible Box Preview</div>
+                         {selectedChapterVerse ? (
+                           <div className="flex-1 flex flex-col justify-center animate-fade-in">
+                             <p className="text-sm text-cream font-bold leading-relaxed mb-4 line-clamp-4 italic">"{selectedChapterVerse.text}"</p>
+                             <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+                               <span className="text-[9px] font-black text-gold uppercase tracking-widest">{chapterVerses.reference}:{selectedChapterVerse.verse}</span>
+                               <button 
+                                 onClick={() => {
+                                   const newVerse = { reference: `${chapterVerses.reference}:${selectedChapterVerse.verse} (${bibleVersion.toUpperCase()})`, text: selectedChapterVerse.text }
+                                   if (!bibleQueue.some(q => q.reference === newVerse.reference)) {
+                                     saveQueue([newVerse, ...bibleQueue])
+                                   }
+                                   projectStoredVerse(newVerse)
+                                 }}
+                                 className="bg-gold text-dark-950 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:brightness-110 transition-all"
+                               >
+                                 Project
+                               </button>
+                             </div>
+                           </div>
+                         ) : (
+                           <div className="flex-1 flex flex-col items-center justify-center opacity-20">
+                             <Search className="w-8 h-8 mb-2" />
+                             <p className="text-[8px] font-black uppercase tracking-widest">Select Verse</p>
+                           </div>
+                         )}
+                      </div>
+                    </div>
                   </div>
                 )}
+                
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+
+                  {bibleQueue.map((v, i) => {
+                    const isProjected = detectedScripture === v.reference
+                    return (
+                      <div 
+                        key={i} 
+                        onClick={() => projectStoredVerse(v)}
+                        className={`bg-dark-950/40 border p-4 rounded-xl group transition-all cursor-pointer select-none ${isProjected ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30 hover:bg-white/5'}`}
+                        title="Tap to Project"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isProjected ? 'text-gold' : 'text-gold/60'}`}>{v.reference}</span>
+                          <div className="flex gap-1 items-center">
+                             <button 
+                               onClick={(e) => { e.stopPropagation(); removeFromQueue(i) }}
+                               className="p-1.5 rounded-lg transition-all text-red-500/50 hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100"
+                               title="Remove from Queue"
+                             >
+                               <Trash2 className="w-4 h-4" />
+                             </button>
+                             <div className={`p-1.5 rounded-lg transition-all ${isProjected ? 'bg-gold text-dark-950' : 'text-cream/20 group-hover:text-gold/40'}`}>
+                               {isProjected ? <Eye className="w-4 h-4"/> : <div className="w-4 h-4" />}
+                             </div>
+                          </div>
+                        </div>
+                        <p className={`text-sm leading-relaxed ${isProjected ? 'text-cream font-bold' : 'text-cream/70 line-clamp-2'}`}>{v.text}</p>
+                      </div>
+                    )
+                  })}
+                  {bibleQueue.length === 0 && (
+                    <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
+                      <BookOpen className="w-12 h-12 mb-2" />
+                      <p className="text-[10px] uppercase font-black tracking-widest">Queue Empty</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

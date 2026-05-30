@@ -48,6 +48,9 @@ export async function POST(req: Request) {
 
     let lyrics = data.choices[0].message.content.trim()
     
+    // Remove markdown formatting like asterisks
+    lyrics = lyrics.replace(/\*\*/g, '').replace(/\*/g, '')
+
     // Remove potential markdown code blocks if the AI included them
     if (lyrics.startsWith('```')) {
       lyrics = lyrics.replace(/^```(?:text|lyrics|markdown)?\n?/, '').replace(/\n?```$/, '').trim()
