@@ -29,36 +29,11 @@ export async function POST(req: Request) {
         const mimeType = file.type || 'image/png'
         const dataUri = `data:${mimeType};base64,${base64}`
 
-        // AI SLIDE ANALYSIS:
-        // We'll use AI to determine if this image is actually a presentation slide
-        // This prevents "picking" random pictures from a PDF that aren't slides
-        let isActuallyASlide = true 
-
-        if (backendUrl && backendUrl !== 'https://huggingface.co/spaces/your-space-url') {
-          try {
-            console.log('Calling AI Vision to verify slide:', file.name)
-            const res = await fetch(`${backendUrl}/api/verify-slide`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ image: dataUri })
-            })
-            if (res.ok) {
-              const analysis = await res.json()
-              isActuallyASlide = analysis.is_slide
-              console.log(`AI Analysis for ${file.name}: ${isActuallyASlide ? 'SLIDE' : 'NOT A SLIDE'}`)
-            }
-          } catch (e) {
-            console.error("AI Slide Analysis error", e)
-          }
-        }
-
-        if (isActuallyASlide) {
-          const slide = await saveData(userId, 'slides' as any, {
-            title: file.name,
-            url: dataUri
-          })
-          validSlides.push(slide)
-        }
+        const slide = await saveData(userId, 'slides' as any, {
+          title: file.name,
+          url: dataUri
+        })
+        validSlides.push(slide)
       } else {
         // Fallback for non-image files
         console.log('Saving non-image file:', file.name)
